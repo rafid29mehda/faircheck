@@ -1,0 +1,8 @@
+# Runtime dependencies for the deployed app, fully pinned.
+# Verified to install together on Python 3.12 and 3.13 (see PLAN.md 2.1).
+# fairlearn is deliberately absent: it is a test oracle, not a runtime dependency
+# (docs/DECISIONS.md D2).
+numpy==2.5.3
+pandas==3.0.6
+streamlit==1.64.0
+altair==6.3.0

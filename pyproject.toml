@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "faircheck"
+version = "0.1.0"
+description = "Correct, uncertainty-aware fairness reports for classification predictions."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+authors = [{ name = "Rafid Mehda" }]
+keywords = ["fairness", "machine learning", "auditing", "calibration", "metrics"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+# The core library deliberately depends on nothing but the array stack: no UI
+# framework, and no fairlearn (which is a *test oracle* only -- see docs/DECISIONS.md D2).
+dependencies = ["numpy>=2.0", "pandas>=2.2"]
+
+[project.optional-dependencies]
+app = ["streamlit>=1.50"]
+
+[project.urls]
+Homepage = "https://github.com/rafidmehda/faircheck"
+
+[tool.setuptools.packages.find]
+include = ["faircheck*"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM", "NPY", "RUF"]
+# The multiplication sign is deliberate: intersectional group labels read "female × Black",
+# which is clearer than "female x Black" when a group value could itself contain an "x".
+ignore = ["RUF001", "RUF002"]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests assert on magic numbers by design; that is the point of a hand-computed case.
+"tests/*" = ["E501"]
+
+[tool.mypy]
+python_version = "3.12"
+files = ["faircheck", "tests"]
+disallow_untyped_defs = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+no_implicit_optional = true
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+filterwarnings = ["error"]
