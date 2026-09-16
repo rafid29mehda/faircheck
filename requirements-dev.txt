@@ -3,6 +3,9 @@
 # fairlearn + scikit-learn are the independent oracle the metric tests compare against.
 fairlearn==0.14.0
 scikit-learn==1.9.1
+# scipy arrives transitively with fairlearn, but the bootstrap tests import it directly
+# (KS test), so it is declared explicitly.
+scipy==1.18.1
 
 pytest==9.1.1
 pytest-cov==7.1.0

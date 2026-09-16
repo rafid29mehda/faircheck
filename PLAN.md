@@ -221,6 +221,7 @@ bootstrap in distribution (same seed family, KS / mean-and-quantile agreement).
 - Default scheme: **stratified** (group sizes held at their observed values) — the right conditioning for per-group rate CIs.
 - Score-based metrics (AUC, ECE) are *not* functions of four counts, so they use genuine row-level index resampling per group, with a lower default `B` and a row cap.
 - Intervals are **percentile** CIs at [2.5%, 50%, 97.5%]. Honest caveat in the UI: percentile bootstrap under-covers for very small or zero-count cells, which is exactly why cells with n < 30 are flagged.
+- **Revision (M2), important.** A max−min gap is non-negative by construction, so its CI essentially never contains zero and "CI excludes 0" is *not* a valid no-gap test. Verdicts therefore come from **signed contrasts against a reference group** (default: the largest group), which can legitimately straddle zero. Both are reported; only contrasts drive wording. On the spec's own hand-computed case the equal-opportunity max−min CI is [0.016, 0.441] (excludes 0) while the signed TPR contrast is −0.200 [−0.441, +0.056] (includes 0). See DECISIONS.md D11.
 - Sanity test: for a single proportion, the bootstrap CI must land close to a Clopper–Pearson/Wilson interval — a cheap, strong check that the machinery is right.
 - Seeding: `numpy.random.default_rng(seed)`, seed surfaced in the UI and written into the exported report so any number in the report is reproducible.
 
@@ -385,7 +386,7 @@ caller of a library that runs anywhere.
 ## 10. Milestones
 
 - [x] **M1 — Skeleton + validation + metrics.** Repo, packaging, pins, `.gitignore`, MIT, CI workflow. `validate.py`, `metrics.py`, `types.py`. Tests 1, 3, 4, 5, 10 passing. *Delivered 2026-09-21: 79 tests, 97% coverage, ruff + mypy clean, hand-computed table printed from FairCheck's own code.*
-- [ ] **M2 — Bootstrap + Fairlearn oracle.** `bootstrap.py` with the multinomial fast path; tests 2 and 6 passing, including fast-path ≡ naive equivalence and a timing number. *Deliverable: per-group table with CIs, plus measured runtime at n=100k, B=1000.*
+- [x] **M2 — Bootstrap + Fairlearn oracle.** `bootstrap.py` with the multinomial fast path; tests 2 and 6 passing, including fast-path ≡ naive equivalence and a timing number. *Delivered 2026-09-21: 154 tests, 98% coverage, per-group table with 95% CIs; B=1000 takes 2.5 ms at n=100k and 2.7 ms at n=10M. Added signed reference contrasts (D11) after finding that max−min gap CIs cannot support evidence claims.*
 - [ ] **M3 — Scores and calibration.** `calibration.py`: per-group ROC-AUC (graceful skip), reliability bins, ECE, threshold sweep. `impossibility.py`. Tests 5, 7 passing. *Deliverable: printed ECE/AUC per group on the synthetic calibrated example.*
 - [ ] **M4 — Report + CLI.** `report.py`, `guidance.py`, `__main__.py`. Tests 8, 9, 11 passing. *Deliverable: a full generated `report.md` pasted into chat.*
 - [ ] **M5 — Bundled examples (four).** Seeded generator scripts + committed CSVs for ACS income, UCI Adult, COMPAS-like and near-fair; verify the COMPAS-like example really is calibrated with unequal error rates and the near-fair one really has CIs covering zero. *Deliverable: each CSV's summary stats.*

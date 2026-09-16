@@ -138,6 +138,40 @@ Real COMPAS records are **not** bundled. The synthetic case makes the same pedag
 point without restating a contested factual claim about real defendants. Every generator
 is seeded and its CSV committed, so tests and CI never touch the network.
 
+## D11 — Evidence claims use signed contrasts against a reference group, never max−min gaps
+**2026-09-21 · accepted**
+
+A gap defined as `max_a r_a − min_a r_a` is **non-negative by construction**. Its bootstrap
+interval therefore almost never contains zero, even when every group shares the same true
+rate, because sampling noise alone pushes the maximum above the minimum. Reading "the CI
+excludes zero" as evidence of disparity would make the tool report a gap in *every dataset
+it ever sees* — the single most consequential statistical mistake available here.
+
+Demonstrated on the specification's own hand-computed case (n = 100 per group):
+
+| | value | 95% CI |
+|---|---|---|
+| Equal opportunity difference (max−min) | 0.200 | [0.016, 0.441] — excludes 0 |
+| TPR contrast, B − A (signed) | −0.200 | [−0.441, +0.056] — **includes 0** |
+
+Same data, same metric, opposite verdicts. The max−min interval looks significant; the
+honest signed comparison says the data cannot resolve a 0.20 TPR gap at this sample size.
+
+So FairCheck reports both, with different jobs. The max−min gaps are the headline summary
+numbers (and match Fairlearn's definitions, so they are comparable with the literature).
+The **signed contrast of each group against a reference group** is what drives every verdict
+and every sentence of the plain-language summary.
+
+The reference defaults to the **largest** group, not the extreme one. Picking the extreme
+group after looking at the results is a selection effect: the winner of a noisy maximum is
+optimistic, and its naive interval under-covers. `has_clear_contrast` returns `None` when
+the interval is undefined, and `False` means "no clear evidence of a difference" — never
+"no difference".
+
+*Guard:* `test_max_minus_min_gap_is_positive_even_when_all_groups_are_identical` builds three
+groups from one distribution and asserts that the max−min interval stays away from zero
+while every signed contrast straddles it.
+
 ## D10 — Deployment and the git remote are deferred
 **2026-09-21 · accepted**
 

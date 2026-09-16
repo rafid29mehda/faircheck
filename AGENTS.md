@@ -24,10 +24,10 @@ honest communication rank above visual polish and feature count**. Concretely:
 | | |
 |---|---|
 | Phase | 2 (execution). Plan approved 2026-09-21. |
-| Milestone | **M1 complete** (skeleton, validation, metrics, CI). **M2 next** (bootstrap + Fairlearn oracle). |
-| Tests | 79 passing, 97% coverage on `faircheck/` |
+| Milestone | **M1–M2 complete** (skeleton, validation, metrics, bootstrap, Fairlearn oracle). **M3 next** (calibration: per-group ROC-AUC, reliability bins, ECE, threshold sweep, `impossibility.py`). |
+| Tests | 154 passing, 98% coverage on `faircheck/` |
 | Quality gate | `ruff check` + `ruff format --check` + `mypy` + `pytest` all green |
-| Not started | `bootstrap.py`, `calibration.py`, `impossibility.py`, `guidance.py`, `report.py`, `__main__.py`, `app.py`, `examples/`, `README.md`, `CITATION.cff` |
+| Not started | `calibration.py`, `impossibility.py`, `guidance.py`, `report.py`, `__main__.py`, `app.py`, `examples/`, `README.md`, `CITATION.cff` |
 | Deployment | **Deliberately deferred** — the user asked not to think about hosting or a GitHub remote yet. Do not create a remote or deploy without being asked. |
 
 ## How to work here
@@ -69,6 +69,8 @@ These are enforced by tests, not just convention — breaking one turns CI red.
    a group with no positives) must never be `0.0`, and a gap involving a `NaN` must stay
    `NaN`. This is the single most important behavioural rule in the project; Fairlearn
    returns `0.0` here and we deliberately differ. See DECISIONS.md D3.
+   *Rendering trap:* pandas ignores `float_format` for `NaN` and uses `na_rep`, so a table
+   built with `to_string`/`to_markdown` prints "NaN" unless `na_rep="n/a"` is passed.
 4. **Metrics are shape-generic.** Every rate takes an array whose last axis is the four
    confusion cells `(TP, FP, FN, TN)`; every gap reduces over the group axis. So the same
    formulas serve the point estimate `(n_groups, 4)` and the bootstrap
@@ -76,6 +78,10 @@ These are enforced by tests, not just convention — breaking one turns CI red.
 5. **Registries, not repetition.** `metrics.RATES` and `metrics.GAPS` carry each metric's
    label, formula, reference and inputs. The report and UI iterate over these; they must
    not restate a formula or a citation inline.
+6. **Verdicts come from signed contrasts, never from max−min gaps.** A max−min gap is
+   non-negative by construction, so its CI excludes zero even under no disparity. Use
+   `BootstrapResult.has_clear_contrast`, which can return `None`. See DECISIONS.md D11 —
+   this is the second most important behavioural rule after invariant 3.
 
 ## Conventions
 

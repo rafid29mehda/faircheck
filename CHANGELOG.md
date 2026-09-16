@@ -5,6 +5,36 @@ Milestones are defined in `PLAN.md`; the reasoning behind design choices is in `
 
 ## [Unreleased]
 
+### M2 — bootstrap confidence intervals — 2026-09-21
+
+Added
+- `faircheck.bootstrap`: percentile confidence intervals for every rate, gap and contrast.
+  The resampling uses the multinomial identity from D4 — a within-group row bootstrap *is* a
+  `Multinomial(n_g, cells_g / n_g)` draw over the four confusion cells — so the cost is
+  `O(n_boot × 4 × n_groups)` and does not depend on the number of rows. Measured: **2.5 ms
+  for B = 1000 at n = 100,000, and 2.7 ms at n = 10,000,000**.
+- Both resampling schemes: `stratified` (group sizes fixed, the default and the right
+  conditioning for per-group rates) and `full` (dataset resampled as a whole, matching what
+  Fairlearn's `MetricFrame` bootstrap does).
+- Signed contrasts against a reference group, with `has_clear_contrast` returning
+  `True` / `False` / `None`. This, not the max−min gap, is what supports evidence claims —
+  see the new D11, which is the most important correctness decision since D3.
+- `rate_undefined_fraction`: when a small group loses some resamples to zero positives, the
+  interval is still reported, beside the proportion of resamples in which the metric did not
+  exist. Permanently undefined rates get a NaN interval and an undefined fraction of 1.0.
+- 46 tests comparing FairCheck against Fairlearn (`MetricFrame`,
+  `demographic_parity_difference`, `demographic_parity_ratio`, `equalized_odds_difference`)
+  across seeds, group counts, and the intersectional case.
+- 29 bootstrap tests: exactness against a naive row-resampling reference (two-sample KS plus
+  means and spreads), agreement with the closed-form Wilson interval for a single
+  proportion, simulated coverage near the nominal 95%, reproducibility, undefined-metric
+  handling, argument validation, and a guard that cost does not grow with row count.
+
+Notes
+- Test count 79 → 154; coverage of `faircheck/` 97% → 98%, with `bootstrap.py` at 100%.
+- `scipy` pinned explicitly in `requirements-dev.txt`: the bootstrap tests import it directly
+  for the KS test rather than relying on it arriving via Fairlearn.
+
 ### M1 — skeleton, validation, metrics, CI — 2026-09-21
 
 Added
