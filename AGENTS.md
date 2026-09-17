@@ -24,10 +24,10 @@ honest communication rank above visual polish and feature count**. Concretely:
 | | |
 |---|---|
 | Phase | 2 (execution). Plan approved 2026-09-21. |
-| Milestone | **M1–M2 complete** (skeleton, validation, metrics, bootstrap, Fairlearn oracle). **M3 next** (calibration: per-group ROC-AUC, reliability bins, ECE, threshold sweep, `impossibility.py`). |
-| Tests | 154 passing, 98% coverage on `faircheck/` |
+| Milestone | **M1–M3 complete** (metrics, bootstrap, calibration, impossibility). **M4 next** (Markdown report, guidance helper, CLI). |
+| Tests | 190 passing, 98% coverage on `faircheck/` |
 | Quality gate | `ruff check` + `ruff format --check` + `mypy` + `pytest` all green |
-| Not started | `calibration.py`, `impossibility.py`, `guidance.py`, `report.py`, `__main__.py`, `app.py`, `examples/`, `README.md`, `CITATION.cff` |
+| Not started | `guidance.py`, `report.py`, `__main__.py`, `app.py`, `examples/`, `README.md`, `CITATION.cff` |
 | Deployment | **Deliberately deferred** — the user asked not to think about hosting or a GitHub remote yet. Do not create a remote or deploy without being asked. |
 
 ## How to work here
@@ -120,4 +120,6 @@ These are enforced by tests, not just convention — breaking one turns CI red.
 | `faircheck/types.py` | Cell order constants, `ColumnMapping`, `ValidatedData`, `GroupCounts`. |
 | `faircheck/metrics.py` | Confusion counts, per-group rates, gaps, `RATES`/`GAPS` registries. |
 | `faircheck/validate.py` | Input checks and the user-facing error/warning copy. |
+| `faircheck/calibration.py` | Per-group ROC-AUC, reliability bins, positive-class ECE, threshold sweep. |
+| `faircheck/impossibility.py` | Chouldechova identity + equal-PPV / equal-error counterfactuals. |
 | `tests/conftest.py` | `cells_to_frame` + the hand-computed case. Build fixtures from cells. |

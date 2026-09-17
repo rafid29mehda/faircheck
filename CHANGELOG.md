@@ -5,6 +5,27 @@ Milestones are defined in `PLAN.md`; the reasoning behind design choices is in `
 
 ## [Unreleased]
 
+### M3 — calibration, threshold sweep, impossibility explainer — 2026-09-21
+
+Added
+- `faircheck.calibration`: Mann-Whitney ROC-AUC (no sklearn at runtime), equal-width
+  reliability bins, **positive-class** ECE (D12), and a vectorised threshold sweep
+  (`score >= t`) via `searchsorted`. A group missing either class gets `roc_auc = NaN`
+  with a reason, never 0.5 / 0.0. Empty bins contribute 0 to ECE.
+- `faircheck.impossibility`: substitutes the user's rates into Chouldechova's identity
+  and two counterfactuals (equalise PPV; equalise TPR/FPR). `tradeoff_applies` is the
+  only boolean the UI should branch on. A counterfactual FPR outside [0, 1] is flagged
+  `equal_ppv_feasible=False` rather than clipped — that is the identity saying those
+  rates cannot co-exist.
+- Tests: hand-computed two-bin ECE = 0.14; ECE grows as scores are shifted; AUC matches
+  sklearn; sweep at a cut matches `confusion_counts`; identity recovers the spec case;
+  perfect classifiers and equal base rates do not trigger the trade-off.
+
+Notes
+- Test count 154 → 190; coverage of `faircheck/` stays 98%, with `impossibility.py` at 100%.
+- Deliverable numbers (seeded, Y ~ Bernoulli(score), Beta(2,5) vs Beta(5,2)): group A
+  AUC 0.716 ECE 0.019; group B AUC 0.730 ECE 0.020; base-rate spread 0.41.
+
 ### M2 — bootstrap confidence intervals — 2026-09-21
 
 Added

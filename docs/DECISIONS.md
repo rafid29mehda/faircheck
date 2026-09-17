@@ -172,6 +172,24 @@ the interval is undefined, and `False` means "no clear evidence of a difference"
 groups from one distribution and asserts that the max−min interval stays away from zero
 while every signed contrast straddles it.
 
+## D12 — ECE is on the positive-class probability, not top-label confidence
+**2026-09-21 · accepted**
+
+Guo et al. (2017) define ECE over top-label confidence `max_k p̂(y=k)`. FairCheck's score
+column is `s = p̂(Y=1)`, and the question the UI asks is "will a human read this as a
+probability of the favorable outcome?" Those are different quantities. We bin `s` on
+equal-width [0, 1] intervals (default 10) and compare the mean score in each bin to the
+observed positive rate. Empty bins contribute 0. Nixon et al. (2019) note that ECE is
+binning-sensitive and biased; the bin count is part of the reported number, and ECE is
+treated as descriptive, not a test.
+
+The same honesty rule as D3 applies to ROC-AUC: a group with only one class is `n/a`
+with a reason, not 0.5.
+
+*Related.* Chouldechova's identity can return an FPR outside [0, 1] when asked to
+equalise PPV at a value incompatible with a group's prevalence and FNR. That is reported
+as infeasible, not clipped to 1.0.
+
 ## D10 — Deployment and the git remote are deferred
 **2026-09-21 · accepted**
 
