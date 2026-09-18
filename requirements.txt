@@ -6,3 +6,5 @@ numpy==2.5.3
 pandas==3.0.6
 streamlit==1.64.0
 altair==6.3.0
+# Pure-Python PDF export (D6). No system libraries; wheels only.
+fpdf2==2.8.8

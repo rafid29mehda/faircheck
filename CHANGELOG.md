@@ -5,6 +5,35 @@ Milestones are defined in `PLAN.md`; the reasoning behind design choices is in `
 
 ## [Unreleased]
 
+### M4 — Markdown report, guidance helper, CLI — 2026-09-21
+
+Added
+- `faircheck.guidance`: three-question metric-selection helper (`recommend`) that
+  highlights a family and never scores the model (D7). `summarize` and `verdict_for_gap`
+  speak only from signed reference contrasts, so a max−min gap whose CI excludes zero
+  is not treated as evidence (D11). Formatters render undefined rates as `n/a`, never
+  `NaN`.
+- `faircheck.report`: `run_audit` orchestrates validate → counts → bootstrap →
+  impossibility → (optional) calibration. `render_markdown` is the single source of
+  truth for the CLI and the future app; it refuses to emit a `nan` token. PDF is
+  derived from that Markdown via **fpdf2 2.8.8** (pure-Python wheel, Helvetica core
+  fonts, no system libraries) — D6.
+- `python -m faircheck report data.csv --label … --pred … --group … --positive …`
+  (`--score`, `--out`, `--pdf`, `--n-boot`, `--seed`, and the three helper questions
+  optional). The CLI computes no metric of its own.
+- Tests 8, 9, 11: every report section present and numbers match the computed
+  objects; CI-includes-zero wording is asserted on the spec case; CLI stdout matches
+  the library and `python -m faircheck` writes a PDF.
+
+Notes
+- Test count 190 → 228; coverage of `faircheck/` stays 98%.
+- Deliverable (hand-computed case, B = 1000, seed 0): B's selection rate is 30 pp
+  lower than A's (95% CI −42 to −17). Equal-opportunity max−min is 0.200
+  [0.016, 0.441] (excludes 0) but the signed TPR contrast includes 0, so the summary
+  says **no clear evidence of a gap** in TPR. Disparate impact ratio 0.400 raises
+  the four-fifths *screen*, with the EEOC "rule of thumb, not a legal finding"
+  sentence attached.
+
 ### M3 — calibration, threshold sweep, impossibility explainer — 2026-09-21
 
 Added

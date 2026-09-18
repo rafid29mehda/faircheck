@@ -24,10 +24,10 @@ honest communication rank above visual polish and feature count**. Concretely:
 | | |
 |---|---|
 | Phase | 2 (execution). Plan approved 2026-09-21. |
-| Milestone | **M1–M3 complete** (metrics, bootstrap, calibration, impossibility). **M4 next** (Markdown report, guidance helper, CLI). |
-| Tests | 190 passing, 98% coverage on `faircheck/` |
+| Milestone | **M1–M4 complete** (metrics, bootstrap, calibration, impossibility, Markdown report + CLI). **M5 next** (bundled examples). |
+| Tests | 228 passing, 98% coverage on `faircheck/` |
 | Quality gate | `ruff check` + `ruff format --check` + `mypy` + `pytest` all green |
-| Not started | `guidance.py`, `report.py`, `__main__.py`, `app.py`, `examples/`, `README.md`, `CITATION.cff` |
+| Not started | `app.py`, `examples/`, `README.md`, `CITATION.cff` |
 | Deployment | **Deliberately deferred** — the user asked not to think about hosting or a GitHub remote yet. Do not create a remote or deploy without being asked. |
 
 ## How to work here
@@ -99,7 +99,8 @@ These are enforced by tests, not just convention — breaking one turns CI red.
 ## Verified facts (checked 2026-09-21, don't re-derive from memory)
 
 - Pinned and confirmed installing together on Python 3.12 **and** 3.13: `fairlearn==0.14.0`,
-  `streamlit==1.64.0`, `numpy==2.5.3`, `pandas==3.0.6`, `scikit-learn==1.9.1`, `altair==6.3.0`.
+  `streamlit==1.64.0`, `numpy==2.5.3`, `pandas==3.0.6`, `scikit-learn==1.9.1`, `altair==6.3.0`,
+  `fpdf2==2.8.8` (pure-Python PDF, D6).
 - `numpy` 2.5.x needs Python >= 3.12, so the CI matrix is **3.12 and 3.13** (not 3.11).
 - Fairlearn's `MetricFrame` reproduces the hand-computed case in `tests/conftest.py` exactly.
 - Fairlearn's `true_positive_rate` returns `0.0` for a group with no positives. This is the
@@ -122,4 +123,7 @@ These are enforced by tests, not just convention — breaking one turns CI red.
 | `faircheck/validate.py` | Input checks and the user-facing error/warning copy. |
 | `faircheck/calibration.py` | Per-group ROC-AUC, reliability bins, positive-class ECE, threshold sweep. |
 | `faircheck/impossibility.py` | Chouldechova identity + equal-PPV / equal-error counterfactuals. |
+| `faircheck/guidance.py` | Metric-selection helper + hedged plain-language summary (D7, D11). |
+| `faircheck/report.py` | Audit orchestrator; Markdown report; derived PDF via fpdf2 (D6). |
+| `faircheck/__main__.py` | CLI: `python -m faircheck report ...` — thin caller, no metric logic. |
 | `tests/conftest.py` | `cells_to_frame` + the hand-computed case. Build fixtures from cells. |

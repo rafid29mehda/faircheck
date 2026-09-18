@@ -88,16 +88,24 @@ what the project demonstrates.
 *Guard:* `test_flipping_the_positive_label_swaps_the_confusion_matrix`.
 
 ## D6 — Markdown is the canonical report; PDF is derived from it
-**2026-09-21 · accepted, PDF route to be chosen in M4**
+**2026-09-21 · accepted; PDF via fpdf2 2.8.8 (M4)**
 
 `report.py` produces Markdown, and the app and CLI emit byte-identical output from the
 same function, so the export is covered by CI.
 
-PDF export was requested and will be attempted, but as a *derived* artifact. The library
-will be chosen in M4 against one hard constraint: **pure-Python wheels only, no system
-libraries** (a headless browser or a Cairo/Pango stack is the classic "works locally, 500s
-in production" failure). If no option meets that bar, the fallback is print-friendly CSS
-plus a browser print hint, and the plan gets revised rather than the constraint dropped.
+PDF is a *derived* artifact of that Markdown. M4 chose **fpdf2 2.8.8**: a pure-Python
+wheel with no system libraries (no headless browser, no Cairo/Pango). Rendering uses
+the 14 PDF core fonts (Helvetica/Courier) so nothing is bundled. `write_pdf` imports
+fpdf2 lazily; metric modules never see it. Install via `pip install 'faircheck[pdf]'`
+or the pin in `requirements.txt`.
+
+Long table rows wrap character-wise (`WrapMode.CHAR`) because a markdown cell can
+exceed the page width in Courier, and `multi_cell(w=0)` measures from the current x
+which may already sit near the right margin. Non-Latin-1 glyphs (`×`, minus, em-dash)
+are folded before Helvetica is asked to draw them.
+
+*Rejected:* weasyprint / wkhtmltopdf (system libraries); a browser print hint as the
+primary path (still available later in the Streamlit app).
 
 ## D7 — No overall fairness score or grade
 **2026-09-21 · accepted**

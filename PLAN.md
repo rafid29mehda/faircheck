@@ -1,6 +1,6 @@
 # FairCheck — Plan (Phase 1)
 
-> Status: **approved 2026-09-21, Phase 2 in progress.** M1–M3 complete; M4 next.
+> Status: **approved 2026-09-21, Phase 2 in progress.** M1–M4 complete; M5 next.
 > Current state and working conventions: `AGENTS.md`. Decisions and rationale: `docs/DECISIONS.md`.
 > Per-milestone changes: `CHANGELOG.md`.
 
@@ -388,7 +388,7 @@ caller of a library that runs anywhere.
 - [x] **M1 — Skeleton + validation + metrics.** Repo, packaging, pins, `.gitignore`, MIT, CI workflow. `validate.py`, `metrics.py`, `types.py`. Tests 1, 3, 4, 5, 10 passing. *Delivered 2026-09-21: 79 tests, 97% coverage, ruff + mypy clean, hand-computed table printed from FairCheck's own code.*
 - [x] **M2 — Bootstrap + Fairlearn oracle.** `bootstrap.py` with the multinomial fast path; tests 2 and 6 passing, including fast-path ≡ naive equivalence and a timing number. *Delivered 2026-09-21: 154 tests, 98% coverage, per-group table with 95% CIs; B=1000 takes 2.5 ms at n=100k and 2.7 ms at n=10M. Added signed reference contrasts (D11) after finding that max−min gap CIs cannot support evidence claims.*
 - [x] **M3 — Scores and calibration.** `calibration.py`: per-group ROC-AUC (graceful skip), reliability bins, ECE, threshold sweep. `impossibility.py`. Tests 5, 7 passing. *Delivered 2026-09-21: 190 tests, 98% coverage. On a seeded calibrated synthetic (Y ~ Bernoulli(score), different Beta scores by group): ECE 0.019 / 0.020, AUC 0.716 / 0.730; Chouldechova identity holds to 1e-16; equal-PPV counterfactuals that require FPR > 1 are flagged infeasible rather than printed as rates (D12).*
-- [ ] **M4 — Report + CLI.** `report.py`, `guidance.py`, `__main__.py`. Tests 8, 9, 11 passing. *Deliverable: a full generated `report.md` pasted into chat.*
+- [x] **M4 — Report + CLI.** `report.py`, `guidance.py`, `__main__.py`. Tests 8, 9, 11 passing. *Delivered 2026-09-21: 228 tests, 98% coverage. Generated report on the hand-computed case: selection-rate contrast 30 pp (CI −42 to −17) is a clear difference; equal-opportunity max−min 0.200 [0.016, 0.441] excludes 0 but the signed TPR contrast includes 0, so the summary hedges (D11). PDF via fpdf2 2.8.8 (D6).*
 - [ ] **M5 — Bundled examples (four).** Seeded generator scripts + committed CSVs for ACS income, UCI Adult, COMPAS-like and near-fair; verify the COMPAS-like example really is calibrated with unequal error rates and the near-fair one really has CIs covering zero. *Deliverable: each CSV's summary stats.*
 - [ ] **M6 — Streamlit app.** All six tabs, Okabe–Ito palette with non-colour encoding, privacy notice, Markdown + PDF download, caching, row caps. *Deliverable: screenshots of each tab from a real local run.*
 - [ ] **M7 — README + citation.** README written from real runs with real numbers and a real screenshot; `CITATION.cff`; final read-through for over-claiming. Deployment is deferred (§8), so this milestone ships the repo, not a URL. *Deliverable: README + a full generated report.*
