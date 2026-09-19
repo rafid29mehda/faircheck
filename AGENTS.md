@@ -24,10 +24,10 @@ honest communication rank above visual polish and feature count**. Concretely:
 | | |
 |---|---|
 | Phase | 2 (execution). Plan approved 2026-09-21. |
-| Milestone | **M1–M4 complete** (metrics, bootstrap, calibration, impossibility, Markdown report + CLI). **M5 next** (bundled examples). |
-| Tests | 228 passing, 98% coverage on `faircheck/` |
+| Milestone | **M1–M5 complete** (core, report/CLI, four bundled examples). **M6 next** (Streamlit app). |
+| Tests | 239 passing, 98% coverage on `faircheck/` |
 | Quality gate | `ruff check` + `ruff format --check` + `mypy` + `pytest` all green |
-| Not started | `app.py`, `examples/`, `README.md`, `CITATION.cff` |
+| Not started | `app.py`, `README.md`, `CITATION.cff` |
 | Deployment | **Deliberately deferred** — the user asked not to think about hosting or a GitHub remote yet. Do not create a remote or deploy without being asked. |
 
 ## How to work here
@@ -126,4 +126,5 @@ These are enforced by tests, not just convention — breaking one turns CI red.
 | `faircheck/guidance.py` | Metric-selection helper + hedged plain-language summary (D7, D11). |
 | `faircheck/report.py` | Audit orchestrator; Markdown report; derived PDF via fpdf2 (D6). |
 | `faircheck/__main__.py` | CLI: `python -m faircheck report ...` — thin caller, no metric logic. |
+| `examples/` | Seeded generators + committed CSVs (ACS Income, Adult, COMPAS-like, near-fair). |
 | `tests/conftest.py` | `cells_to_frame` + the hand-computed case. Build fixtures from cells. |

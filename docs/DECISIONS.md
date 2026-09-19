@@ -132,7 +132,7 @@ metric, which keeps the whole table one vectorised pass. Intersectional keys are
 so the marginal and intersectional views share one code path.
 
 ## D9 — Bundle four examples, including both ACS income and UCI Adult
-**2026-09-21 · accepted (implementation in M5)**
+**2026-09-21 · accepted; implemented in M5**
 
 Per the user's request, both real datasets ship. ACSIncome is the literature's intended
 replacement for Adult (Ding et al. 2021 documented Adult's idiosyncrasies); Adult is more

@@ -5,6 +5,29 @@ Milestones are defined in `PLAN.md`; the reasoning behind design choices is in `
 
 ## [Unreleased]
 
+### M5 — four bundled example CSVs — 2026-09-21
+
+Added
+- Seeded generators under `examples/` and committed CSVs under `examples/data/`.
+  Tests read the files; they never download. Regenerating ACS Income or Adult hits
+  OpenML once via Fairlearn (Washington state; UCI Adult), then caches.
+- **COMPAS-like** (synthetic, n = 8,000): `Y ~ Bernoulli(score)` with Beta(2,5) vs
+  Beta(5,2) scores, shared threshold 0.5. Calibrated (ECE 0.015 / 0.017) with
+  unequal base rates (0.28 vs 0.72) and clear TPR and FPR contrasts. Not real
+  COMPAS records (D9).
+- **Near-fair** (synthetic, n = 10,000): the same Beta(3,3) DGP in both groups.
+  Every signed contrast CI covers 0; the max−min demographic-parity gap still
+  sits away from zero (D11).
+- **ACS Income** (Washington hold-out logistic, n = 8,000) and **UCI Adult**
+  (hold-out logistic, n = 8,000), each with `y_true` / `y_pred` / `score` plus
+  `sex` and `race`. Prefer ACS Income as the real-data example (Ding et al. 2021).
+- `examples/catalog.py` holds the column mapping each CSV expects, so the M6
+  dropdown cannot silently desync.
+
+Notes
+- Test count 228 → 239; coverage of `faircheck/` stays 98%.
+- Real COMPAS microdata is not in the repo.
+
 ### M4 — Markdown report, guidance helper, CLI — 2026-09-21
 
 Added
