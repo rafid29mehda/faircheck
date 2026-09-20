@@ -1,6 +1,6 @@
 # FairCheck — Plan (Phase 1)
 
-> Status: **approved 2026-09-21, Phase 2 in progress.** M1–M5 complete; M6 next.
+> Status: **approved 2026-09-21, Phase 2 in progress.** M1–M6 complete; M7 next.
 > Current state and working conventions: `AGENTS.md`. Decisions and rationale: `docs/DECISIONS.md`.
 > Per-milestone changes: `CHANGELOG.md`.
 
@@ -390,7 +390,7 @@ caller of a library that runs anywhere.
 - [x] **M3 — Scores and calibration.** `calibration.py`: per-group ROC-AUC (graceful skip), reliability bins, ECE, threshold sweep. `impossibility.py`. Tests 5, 7 passing. *Delivered 2026-09-21: 190 tests, 98% coverage. On a seeded calibrated synthetic (Y ~ Bernoulli(score), different Beta scores by group): ECE 0.019 / 0.020, AUC 0.716 / 0.730; Chouldechova identity holds to 1e-16; equal-PPV counterfactuals that require FPR > 1 are flagged infeasible rather than printed as rates (D12).*
 - [x] **M4 — Report + CLI.** `report.py`, `guidance.py`, `__main__.py`. Tests 8, 9, 11 passing. *Delivered 2026-09-21: 228 tests, 98% coverage. Generated report on the hand-computed case: selection-rate contrast 30 pp (CI −42 to −17) is a clear difference; equal-opportunity max−min 0.200 [0.016, 0.441] excludes 0 but the signed TPR contrast includes 0, so the summary hedges (D11). PDF via fpdf2 2.8.8 (D6).*
 - [x] **M5 — Bundled examples (four).** Seeded generator scripts + committed CSVs for ACS income, UCI Adult, COMPAS-like and near-fair; verify the COMPAS-like example really is calibrated with unequal error rates and the near-fair one really has CIs covering zero. *Delivered 2026-09-21: 239 tests, 98% coverage. COMPAS-like (n=8000): ECE 0.015/0.017, base rates 0.28 vs 0.72, clear TPR and FPR contrasts. Near-fair (n=10000): every signed contrast CI covers 0. ACS Income (WA hold-out, n=8000) and UCI Adult (n=8000) ship as prediction CSVs; generators hit OpenML once, tests never do.*
-- [ ] **M6 — Streamlit app.** All six tabs, Okabe–Ito palette with non-colour encoding, privacy notice, Markdown + PDF download, caching, row caps. *Deliverable: screenshots of each tab from a real local run.*
+- [x] **M6 — Streamlit app.** All six tabs, Okabe–Ito palette with non-colour encoding, privacy notice, Markdown + PDF download, caching, row caps. *Delivered 2026-09-21: 243 tests passing (1 skip), 98% coverage. `app.py` is a thin caller of `run_audit`. Local run on COMPAS-like (n=8000) shows ECE 0.015/0.017, clear TPR/FPR contrasts, four-fifths screen raised with the EEOC heuristic wording, and Markdown+PDF download. ACS Income with sex×race opens the Intersectional tab (16 groups, 4 with n<30 faded). Screenshots in `scratch/m6/`.*
 - [ ] **M7 — README + citation.** README written from real runs with real numbers and a real screenshot; `CITATION.cff`; final read-through for over-claiming. Deployment is deferred (§8), so this milestone ships the repo, not a URL. *Deliverable: README + a full generated report.*
 
 Each milestone ends with: run the tests, show you real output, tick the box here, **stop for your go-ahead.**

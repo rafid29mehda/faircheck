@@ -1,0 +1,9 @@
+[server]
+maxUploadSize = 50
+
+[browser]
+gatherUsageStats = false
+
+[client]
+# D10: hosting is deferred; the Cloud deploy control would over-claim.
+toolbarMode = "minimal"

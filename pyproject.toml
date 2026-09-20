@@ -52,7 +52,7 @@ ignore = ["RUF001", "RUF002"]
 
 [tool.mypy]
 python_version = "3.12"
-files = ["faircheck", "tests", "examples"]
+files = ["faircheck", "tests", "examples", "app.py"]
 disallow_untyped_defs = true
 warn_unused_ignores = true
 warn_redundant_casts = true

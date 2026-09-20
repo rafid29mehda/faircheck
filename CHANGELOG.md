@@ -5,6 +5,31 @@ Milestones are defined in `PLAN.md`; the reasoning behind design choices is in `
 
 ## [Unreleased]
 
+### M6 — Streamlit app — 2026-09-21
+
+Added
+- `app.py`: six tabs (Groups, Gaps, Scores, Intersectional when two attributes
+  are mapped, Which metric fits?, Why not all at once). The app calls
+  `run_audit`, `format_interval`, `verdict_for_gap`, `recommend`, and
+  `threshold_sweep`; it does not restate a formula.
+- Okabe-Ito colours plus a distinct marker and a direct label on every series,
+  so colour is never load-bearing. Privacy notice on the header and in the
+  sidebar. Markdown and PDF download from the same `render_markdown` /
+  `write_pdf` path as the CLI.
+- `st.cache_data` on CSV load and on the audit (keyed by mapping + seed + B,
+  not by the guidance answers). Upload cap 50 MB (`.streamlit/config.toml` and
+  `file_uploader`); row caps stay in `validate.py` (warn at 200k, subsample at
+  1M) and surface as the library's warnings.
+- `tests/test_app.py`: source-level purity plus AppTest smokes on COMPAS-like
+  and on ACS Income × race (Intersectional tab).
+
+Notes
+- Test count 239 → 243 passed (1 skip when Fairlearn is already imported by
+  another test); coverage of `faircheck/` stays 98%.
+- Local screenshots of each tab: `scratch/m6/` (gitignored). COMPAS-like ECE
+  0.015 / 0.017; four-fifths screen raised as a heuristic, not a finding.
+- Deployment and a GitHub remote remain deferred (D10).
+
 ### M5 — four bundled example CSVs — 2026-09-21
 
 Added
