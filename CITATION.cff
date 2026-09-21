@@ -1,0 +1,23 @@
+cff-version: 1.2.0
+message: If you use FairCheck, please cite it as below.
+type: software
+title: FairCheck
+version: 0.1.0
+date-released: 2026-09-21
+license: MIT
+abstract: >-
+  A web app, CLI, and pure-Python library that takes a CSV of classification
+  predictions and returns an uncertainty-aware fairness report. Per-group rates
+  carry bootstrap intervals; verdicts use signed contrasts against a reference
+  group rather than max-min gaps; undefined rates render as n/a rather than 0.0.
+  There is no headline fairness grade.
+authors:
+  - family-names: Mehda
+    given-names: Rafid
+keywords:
+  - fairness
+  - machine learning
+  - auditing
+  - calibration
+  - bootstrap
+  - impossible fairness criteria

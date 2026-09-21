@@ -19,3 +19,7 @@ thereafter); the two synthetic examples are pure NumPy.
 | `adult.csv` | UCI Adult, hold-out logistic predictions. `y_true = 1` means income > $50,000. Prefer ACS Income (D9). | `sex`, `race` | Becker & Kohavi, DOI [10.24432/C5XW20](https://doi.org/10.24432/C5XW20) |
 
 Shared columns: `y_true`, `y_pred`, `score` in `[0, 1]`. Predictions are `score >= 0.5`.
+
+A seeded CLI report on COMPAS-like (`n_boot=1000`, seed 0) is committed at
+[`reports/compas_like.md`](reports/compas_like.md). The README quotes it; tests
+assert the file still matches `python -m faircheck report`.

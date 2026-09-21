@@ -118,3 +118,36 @@ def test_cli_smokes_on_the_bundled_compas_like_example(tmp_path: Path) -> None:
     text = out.read_text(encoding="utf-8")
     assert "# FairCheck report" in text
     assert "8000" in text or "8,000" in text
+
+
+def test_committed_compas_like_report_matches_the_cli(tmp_path: Path) -> None:
+    """The README quotes this file. If the library moves, regenerate it; do not edit numbers."""
+    spec = EXAMPLES_BY_KEY["compas_like"]
+    out = tmp_path / "compas_like.md"
+    assert (
+        main(
+            [
+                "report",
+                str(spec.path),
+                "--label",
+                "y_true",
+                "--pred",
+                "y_pred",
+                "--group",
+                "group",
+                "--score",
+                "score",
+                "--positive",
+                "1",
+                "--n-boot",
+                "1000",
+                "--seed",
+                "0",
+                "--out",
+                str(out),
+            ]
+        )
+        == 0
+    )
+    committed = Path(__file__).resolve().parent.parent / "examples" / "reports" / "compas_like.md"
+    assert committed.read_text(encoding="utf-8") == out.read_text(encoding="utf-8")

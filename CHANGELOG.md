@@ -5,6 +5,23 @@ Milestones are defined in `PLAN.md`; the reasoning behind design choices is in `
 
 ## [Unreleased]
 
+### M7 — README + citation — 2026-09-21
+
+Added
+- `README.md` written from a real CLI run on `examples/data/compas_like.csv`
+  (n = 8,000, B = 1,000, seed 0). Numbers are copied from
+  `examples/reports/compas_like.md`. A local Streamlit screenshot is
+  `docs/images/compas_like_groups.png`.
+- `CITATION.cff` (v0.1.0, MIT, author Rafid Mehda). ORCID is omitted until
+  confirmed.
+- Tests: the committed report must match `python -m faircheck report`; the
+  README must contain those strings and must not claim a live demo URL.
+
+Notes
+- Test count 243 → 247 passed (1 skip); coverage of `faircheck/` stays 98%.
+- Removed the unpublished GitHub Homepage URL from `pyproject.toml` (D10).
+- Deployment and a GitHub remote remain deferred.
+
 ### M6 — Streamlit app — 2026-09-21
 
 Added
