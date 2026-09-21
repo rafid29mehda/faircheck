@@ -1,6 +1,6 @@
 """Seeded synthetic: identical DGP in both groups, so contrasts cover zero.
 
-The contrast case for the COMPAS-like example. A max−min gap CI will still
+The contrast case for the COMPAS-like example. A max-min gap CI will still
 exclude zero (D11); signed contrasts against the reference group will not.
 """
 

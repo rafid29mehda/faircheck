@@ -189,12 +189,12 @@ def _pdf_safe(text: str) -> str:
     """Helvetica is Latin-1; fold markdown emphasis and non-Latin glyphs rather than crash."""
     folded = (
         text.replace("**", "")
-        .replace("×", " x ")
-        .replace("−", "-")
-        .replace("—", "--")
-        .replace("–", "-")
-        .replace("'", "'")
-        .replace("'", "'")
+        .replace("\u00d7", " x ")
+        .replace("\u2212", "-")
+        .replace("\u2014", "--")
+        .replace("\u2013", "-")
+        .replace("\u2018", "'")
+        .replace("\u2019", "'")
     )
     return folded.encode("latin-1", errors="replace").decode("latin-1")
 
@@ -306,7 +306,7 @@ def _gaps(audit: AuditResult) -> str:
 
     return f"""## Summary gaps
 
-Max−min gaps are the literature's headline numbers (and match Fairlearn). They are
+Max-min gaps are the literature's headline numbers (and match Fairlearn). They are
 non-negative by construction, so a CI that excludes zero is **not** evidence of a
 disparity -- sampling noise alone pushes the maximum above the minimum. The **Verdict**
 column uses signed contrasts against the reference group ({boot.reference_label}), which
@@ -482,7 +482,7 @@ def _methods(audit: AuditResult) -> str:
 Stratified percentile bootstrap with {boot.n_boot:,} resamples and seed {boot.seed}.
 Because every confusion-matrix rate is a function of the four cell counts, a within-group
 row resample is a multinomial draw over those cells (D4). Verdicts use signed contrasts
-against {boot.reference_label}, not max−min gap CIs (D11).
+against {boot.reference_label}, not max-min gap CIs (D11).
 
 {rate_lines}
 

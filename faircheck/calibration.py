@@ -146,7 +146,7 @@ def expected_calibration_error(
 ) -> float:
     """Positive-class ECE (Naeini et al. 2015; Guo et al. 2017 eq. 3, adapted -- D12).
 
-    ``Σ_m (|B_m|/n) · |ȳ(B_m) − s̄(B_m)|``. Empty bins contribute 0. ``NaN`` if ``n = 0``.
+    ``Σ_m (|B_m|/n) · |ȳ(B_m) - s̄(B_m)|``. Empty bins contribute 0. ``NaN`` if ``n = 0``.
     """
     y = _as_bool(y_true)
     if y.size == 0:

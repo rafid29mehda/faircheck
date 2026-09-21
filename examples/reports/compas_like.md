@@ -30,7 +30,7 @@ Accuracy is reported for completeness; it is misleading under class imbalance.
 
 ## Summary gaps
 
-Max−min gaps are the literature's headline numbers (and match Fairlearn). They are
+Max-min gaps are the literature's headline numbers (and match Fairlearn). They are
 non-negative by construction, so a CI that excludes zero is **not** evidence of a
 disparity -- sampling noise alone pushes the maximum above the minimum. The **Verdict**
 column uses signed contrasts against the reference group (A), which
@@ -97,7 +97,7 @@ Sources: Chouldechova 2017 (arXiv:1610.07524); Kleinberg, Mullainathan and Ragha
 Stratified percentile bootstrap with 1,000 resamples and seed 0.
 Because every confusion-matrix rate is a function of the four cell counts, a within-group
 row resample is a multinomial draw over those cells (D4). Verdicts use signed contrasts
-against A, not max−min gap CIs (D11).
+against A, not max-min gap CIs (D11).
 
 - Base rate: `(TP + FN) / n`
 - Selection rate: `(TP + FP) / n`

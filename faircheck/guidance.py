@@ -3,7 +3,7 @@
 Both are deterministic templates. There is no model and no overall fairness grade: the
 helper only highlights a *family* of metrics given the decision context, and the summary
 only restates numbers that :class:`BootstrapResult` already computed. Verdicts use signed
-contrasts (D11), never max−min gap CIs.
+contrasts (D11), never max-min gap CIs.
 """
 
 from __future__ import annotations
@@ -226,7 +226,7 @@ def summarize(
 
 
 def verdict_for_gap(spec: GapSpec, boot: BootstrapResult) -> str:
-    """Contrast-based chip for a gap card. Does *not* look at the max−min CI (D11)."""
+    """Contrast-based chip for a gap card. Does *not* look at the max-min CI (D11)."""
     flags = [
         boot.has_clear_contrast(rate_key, index)
         for rate_key in spec.inputs

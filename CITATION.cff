@@ -5,6 +5,7 @@ title: FairCheck
 version: 0.1.0
 date-released: 2026-09-21
 license: MIT
+repository-code: "https://github.com/rafid29mehda/faircheck"
 abstract: >-
   A web app, CLI, and pure-Python library that takes a CSV of classification
   predictions and returns an uncertainty-aware fairness report. Per-group rates

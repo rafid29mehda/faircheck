@@ -12,16 +12,16 @@ fairness grade. Different criteria can disagree; that disagreement is the point
 (Hardt, Price and Srebro 2016; Chouldechova 2017; Kleinberg, Mullainathan and
 Raghavan 2016).
 
-> Screening tool. Not a legal or causal conclusion.
-
 ```text
-FairCheck — open-source fairness auditing tool (Python/Streamlit): disaggregated
+FairCheck - open-source fairness auditing tool (Python/Streamlit): disaggregated
 group metrics with bootstrap confidence intervals, per-group calibration analysis,
 and a metric-selection guide grounded in the Hardt et al. / Chouldechova
 impossibility results. CLI, pytest suite, CI.
 ```
 
-Hosting is deferred. Run it locally (below). There is no public demo URL yet.
+Source: https://github.com/rafid29mehda/faircheck
+
+Run it locally (below). There is no hosted demo yet.
 
 ![FairCheck Groups tab on the bundled COMPAS-like example: two groups, selection-rate
 bars with interval whiskers, and a hedged plain-language summary.](docs/images/compas_like_groups.png)
@@ -34,9 +34,9 @@ The numbers in this README are copied from that same audit, written by
 ## What it will not do
 
 - Print `0.0` for an undefined rate. A group with no positives has TPR `n/a`, not
-  “none found.” Fairlearn’s `true_positive_rate` returns `0.0` here; FairCheck
+  "none found." Fairlearn's `true_positive_rate` returns `0.0` here; FairCheck
   deliberately differs.
-- Treat a max−min gap whose CI excludes zero as evidence. Max−min is non-negative
+- Treat a max-min gap whose CI excludes zero as evidence. Max-min is non-negative
   by construction. Verdicts use **signed contrasts against a reference group**
   (largest group by default).
 - Call the four-fifths (80%) rule a legal finding. It is a screening heuristic.
@@ -55,7 +55,7 @@ python3.12 -m venv .venv
 # App
 .venv/bin/streamlit run app.py
 
-# CLI — same numbers as the app, same Markdown as the download button
+# CLI - same numbers as the app, same Markdown as the download button
 .venv/bin/python -m faircheck report examples/data/compas_like.csv \
   --label y_true --pred y_pred --group group --score score --positive 1 \
   --seed 0 --n-boot 1000 \
@@ -131,7 +131,7 @@ Plain-language summary (verbatim):
 | A | 4000 | 0.280 [0.267, 0.294] | 0.108 [0.099, 0.118] | 0.211 [0.186, 0.233] | 0.068 [0.060, 0.077] | 0.015 | 0.701 |
 | B | 4000 | 0.719 [0.705, 0.733] | 0.896 [0.886, 0.906] | 0.937 [0.928, 0.946] | 0.790 [0.767, 0.814] | 0.017 | 0.707 |
 
-Disparate impact ratio **0.121 [0.111, 0.132]** — the four-fifths screen is raised,
+Disparate impact ratio **0.121 [0.111, 0.132]**. The four-fifths screen is raised
 as a heuristic, not a finding. ECE is the **positive-class** expected calibration
 error (mean score vs observed positive rate, 10 equal-width bins), not Guo et al.'s
 top-label ECE.
@@ -140,8 +140,8 @@ Equalising B's PPV to A's is **impossible** without also moving error rates: the
 Chouldechova identity would require an FPR outside [0, 1].
 
 The near-fair companion (`examples/data/near_fair.csv`) uses the same DGP in both
-groups. Every signed contrast CI covers 0; the max−min demographic-parity gap still
-sits away from zero. That pair is why verdicts never use max−min.
+groups. Every signed contrast CI covers 0; the max-min demographic-parity gap still
+sits away from zero. That pair is why verdicts never use max-min.
 
 ## Bundled examples
 
@@ -163,7 +163,9 @@ Provenance and regeneration: [`examples/README.md`](examples/README.md).
 - Score metrics (ROC-AUC, ECE) use row-level resampling, not the multinomial
   fast path. A group with only one class has ROC-AUC `n/a`, not 0.5.
 - Intersectional cells are small by construction.
-- No mitigation, no causal claims, no deployment story in this repository yet.
+- No mitigation, no causal claims, no hosted demo yet.
+
+Screening tool. Not a legal or causal conclusion.
 
 Design choices are numbered in [`docs/DECISIONS.md`](docs/DECISIONS.md).
 

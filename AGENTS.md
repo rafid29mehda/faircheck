@@ -1,4 +1,4 @@
-# AGENTS.md — orientation for any session working on FairCheck
+# AGENTS.md - orientation for any session working on FairCheck
 
 Read this first, then `PLAN.md` (the agreed plan and milestone checklist) and
 `docs/DECISIONS.md` (why things are the way they are). `CHANGELOG.md` records what
@@ -8,7 +8,7 @@ changed per milestone.
 
 ## What this project is
 
-**FairCheck** — a web app plus pure-Python library that takes a CSV of classification
+**FairCheck** - a web app plus pure-Python library that takes a CSV of classification
 predictions and returns a correct, uncertainty-aware fairness report.
 
 It is an **applied portfolio project** for CS PhD applications (bias and fairness in ML).
@@ -23,12 +23,12 @@ honest communication rank above visual polish and feature count**. Concretely:
 
 | | |
 |---|---|
-| Phase | 2 (execution). Plan approved 2026-09-21. **M1–M7 complete.** |
+| Phase | 2 (execution). Plan approved 2026-09-21. **M1-M7 complete.** |
 | Milestone | **M7 done** (README + citation). No further planned milestones. |
 | Tests | 247 passing (1 skip), 98% coverage on `faircheck/` |
 | Quality gate | `ruff check` + `ruff format --check` + `mypy` + `pytest` all green |
-| Not started | Public remote and hosting (deferred, D10) |
-| Deployment | **Deliberately deferred** — the user asked not to think about hosting or a GitHub remote yet. Do not create a remote or deploy without being asked. |
+| Not started | Streamlit Community Cloud / hosted demo (ask before doing this) |
+| Deployment | GitHub is public (`rafid29mehda/faircheck`). Do not deploy a hosted demo without being asked. |
 
 ## How to work here
 
@@ -58,7 +58,7 @@ committed for exactly this reason.
 
 ## Architecture invariants
 
-These are enforced by tests, not just convention — breaking one turns CI red.
+These are enforced by tests, not just convention - breaking one turns CI red.
 
 1. **`faircheck/` contains no UI code.** No `import streamlit` / `gradio` / `altair` /
    `matplotlib` anywhere under it. `tests/test_core_has_no_ui.py` greps for this.
@@ -78,9 +78,9 @@ These are enforced by tests, not just convention — breaking one turns CI red.
 5. **Registries, not repetition.** `metrics.RATES` and `metrics.GAPS` carry each metric's
    label, formula, reference and inputs. The report and UI iterate over these; they must
    not restate a formula or a citation inline.
-6. **Verdicts come from signed contrasts, never from max−min gaps.** A max−min gap is
+6. **Verdicts come from signed contrasts, never from max-min gaps.** A max-min gap is
    non-negative by construction, so its CI excludes zero even under no disparity. Use
-   `BootstrapResult.has_clear_contrast`, which can return `None`. See DECISIONS.md D11 —
+   `BootstrapResult.has_clear_contrast`, which can return `None`. See DECISIONS.md D11 -
    this is the second most important behavioural rule after invariant 3.
 
 ## Conventions
@@ -88,7 +88,7 @@ These are enforced by tests, not just convention — breaking one turns CI red.
 - Conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:`.
 - Type hints everywhere; `mypy` has `disallow_untyped_defs = true` (tests included).
 - Line length 100. `pytest` runs with `filterwarnings = ["error"]`, so a new warning
-  fails the suite — fix the cause rather than filtering it.
+  fails the suite - fix the cause rather than filtering it.
 - Comments explain *why* / state constraints. Do not add comments narrating what the next
   line does.
 - Tests are built from stated confusion-matrix cells wherever possible, so expected values
@@ -127,7 +127,7 @@ These are enforced by tests, not just convention — breaking one turns CI red.
 | `faircheck/impossibility.py` | Chouldechova identity + equal-PPV / equal-error counterfactuals. |
 | `faircheck/guidance.py` | Metric-selection helper + hedged plain-language summary (D7, D11). |
 | `faircheck/report.py` | Audit orchestrator; Markdown report; derived PDF via fpdf2 (D6). |
-| `faircheck/__main__.py` | CLI: `python -m faircheck report ...` — thin caller, no metric logic. |
+| `faircheck/__main__.py` | CLI: `python -m faircheck report ...` - thin caller, no metric logic. |
 | `examples/` | Seeded generators + committed CSVs (ACS Income, Adult, COMPAS-like, near-fair). |
-| `app.py` | Streamlit UI — thin caller of `run_audit`; zero metric formulas. |
+| `app.py` | Streamlit UI - thin caller of `run_audit`; zero metric formulas. |
 | `tests/conftest.py` | `cells_to_frame` + the hand-computed case. Build fixtures from cells. |

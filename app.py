@@ -88,7 +88,7 @@ def _load_upload(data: bytes, name: str) -> pd.DataFrame:
     return pd.read_csv(io.BytesIO(data))
 
 
-@st.cache_data(show_spinner="Running the audit…")
+@st.cache_data(show_spinner="Running the audit...")
 def _cached_audit(
     frame: pd.DataFrame,
     label: str,
@@ -386,14 +386,14 @@ def _tab_groups(audit: AuditResult) -> None:
     if chart is not None:
         st.altair_chart(chart, width="stretch")
         st.caption(
-            "Colour follows the Okabe–Ito palette; each group also has a distinct marker "
+            "Colour follows the Okabe-Ito palette; each group also has a distinct marker "
             "and a written label, so colour is never load-bearing."
         )
 
 
 def _tab_gaps(audit: AuditResult, highlighted: tuple[str, ...]) -> None:
     st.markdown(
-        "Max−min gaps are the literature's headline numbers. They are non-negative by "
+        "Max-min gaps are the literature's headline numbers. They are non-negative by "
         "construction, so a CI that excludes zero is **not** evidence of a disparity. "
         "The verdict uses signed contrasts against the reference group "
         f"**{audit.bootstrap.reference_label}** (D11)."

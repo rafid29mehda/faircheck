@@ -30,7 +30,8 @@ pdf = ["fpdf2>=2.8,<3"]
 [project.scripts]
 faircheck = "faircheck.__main__:main"
 
-# No Homepage URL: a public remote has not been published (docs/DECISIONS.md D10).
+[project.urls]
+Homepage = "https://github.com/rafid29mehda/faircheck"
 
 [tool.setuptools.packages.find]
 include = ["faircheck*"]
