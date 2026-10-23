@@ -27,7 +27,7 @@ honest communication rank above visual polish and feature count**. Concretely:
 | Milestone | **M10 done** (small-group intervals, D15). No further planned milestones. |
 | Tests | 304 passing (1 skip), 98% coverage on `faircheck/` |
 | Quality gate | `ruff check` + `ruff format --check` + `mypy` + `pytest` all green |
-| Not started | Streamlit Community Cloud / hosted demo (ask before doing this) |
+| In progress | M11 hosted demo: pre-deploy hardening done; the deploy itself still needs an explicit go-ahead |
 | Deployment | GitHub is public (`rafid29mehda/faircheck`). Do not deploy a hosted demo without being asked. |
 
 ## How to work here

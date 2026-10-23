@@ -63,7 +63,10 @@ FOUR_FIFTHS_NOTE = (
     "matter, and larger gaps may not when they rest on small numbers "
     "(29 CFR 1607.4(D); EEOC Q&A)."
 )
-PRIVACY_NOTE = "Uploaded data is processed in memory only and is never stored or logged."
+PRIVACY_NOTE = (
+    "Uploaded data is held in server memory while you use the app and is not saved to a "
+    "database or logs by this app. Use the bundled examples for anything sensitive."
+)
 
 RATES_LABEL = {spec.key: spec.label for spec in RATES}
 GAPS_BY_LABEL = {spec.key: spec.label for spec in GAPS}

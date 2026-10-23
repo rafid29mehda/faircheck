@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+import tomllib
 from pathlib import Path
 from typing import Any
 
@@ -60,7 +62,7 @@ def test_app_runs_the_bundled_compas_like_example() -> None:
     assert "Base rates differ" in text
     captions = " ".join(c.value for c in at.caption)
     assert "Screening tool. Not a legal or causal conclusion." in captions
-    assert "processed in memory" in captions
+    assert "held in server memory" in captions
     labels = [d.label for d in at.download_button]
     assert "Download report (.md)" in labels
     assert "Download report (.pdf)" in labels
@@ -127,3 +129,32 @@ def test_app_says_which_small_groups_use_a_posterior() -> None:
     second.select("race").run()
     assert len(at.exception) == 0
     assert any("Dirichlet" in c.value for c in at.caption)
+
+
+def _decorator_above(source: str, function: str) -> str:
+    match = re.search(rf"((?:@[^\n]*\n)+)def {function}\(", source)
+    assert match is not None, f"no decorator found above {function}"
+    return match.group(1)
+
+
+def test_upload_caches_are_bounded() -> None:
+    """A public host must not keep every upload in memory until it restarts."""
+    source = APP.read_text(encoding="utf-8")
+    for name in ("_load_upload", "_cached_audit"):
+        decorator = _decorator_above(source, name)
+        assert "ttl=" in decorator, f"{name} cache has no time limit"
+        assert "max_entries=" in decorator, f"{name} cache has no entry cap"
+    assert "max_entries=" in _decorator_above(source, "_load_example")
+
+
+def test_config_upload_cap_matches_the_app_and_stays_small() -> None:
+    """Streamlit enforces the config value, the widget shows the app's; they must agree.
+
+    25 MB keeps a single worst-case upload near 300 MB, leaving room for a few visitors
+    sharing one process on the free host.
+    """
+    config = tomllib.loads((ROOT / ".streamlit" / "config.toml").read_text(encoding="utf-8"))
+    match = re.search(r"^MAX_UPLOAD_MB = (\d+)$", APP.read_text(encoding="utf-8"), re.MULTILINE)
+    assert match is not None
+    assert config["server"]["maxUploadSize"] == int(match.group(1))
+    assert int(match.group(1)) <= 25

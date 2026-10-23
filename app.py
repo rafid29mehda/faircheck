@@ -63,7 +63,10 @@ MARKERS: tuple[str, ...] = (
     "triangle-left",
 )
 NONE = "(none)"
-MAX_UPLOAD_MB = 50
+MAX_UPLOAD_MB = 25
+#: Uploads and their audits are dropped after this long, and only a few are kept, so a shared
+#: host does not hold every visitor's file until it restarts.
+UPLOAD_CACHE_TTL_S = 900
 
 
 def _palette(n: int) -> list[str]:
@@ -80,17 +83,17 @@ def _index(options: list[str], preferred: str | None) -> int:
     return 0
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, max_entries=4)
 def _load_example(key: str) -> pd.DataFrame:
     return pd.read_csv(EXAMPLES_BY_KEY[key].path)
 
 
-@st.cache_data(show_spinner=False)
+@st.cache_data(show_spinner=False, ttl=UPLOAD_CACHE_TTL_S, max_entries=3)
 def _load_upload(data: bytes, name: str) -> pd.DataFrame:
     return pd.read_csv(io.BytesIO(data))
 
 
-@st.cache_data(show_spinner="Running the audit...")
+@st.cache_data(show_spinner="Running the audit...", ttl=UPLOAD_CACHE_TTL_S, max_entries=3)
 def _cached_audit(
     frame: pd.DataFrame,
     label: str,

@@ -19,6 +19,7 @@ from faircheck.guidance import (
 )
 from faircheck.report import (
     DISCLAIMER,
+    PRIVACY_NOTE,
     render_markdown,
     run_audit,
     write_markdown,
@@ -262,3 +263,12 @@ def test_auc_skip_reason_is_rendered_when_a_group_has_one_class() -> None:
     markdown = render_markdown(run_audit(frame, _mapping(score="score"), n_boot=50, seed=0))
     assert "n/a (" in markdown
     assert "ROC-AUC" in markdown
+
+
+def test_privacy_note_does_not_overstate() -> None:
+    """The PDF is written to a temp directory and the cache outlives a session, so the note
+    must not say "in memory only" or "never stored"."""
+    assert "in memory only" not in PRIVACY_NOTE
+    assert "never stored" not in PRIVACY_NOTE
+    assert "server memory" in PRIVACY_NOTE
+    assert "bundled examples" in PRIVACY_NOTE

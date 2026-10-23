@@ -1,6 +1,6 @@
 # FairCheck report
 
-Screening tool. Not a legal or causal conclusion. Uploaded data is processed in memory only and is never stored or logged.
+Screening tool. Not a legal or causal conclusion. Uploaded data is held in server memory while you use the app and is not saved to a database or logs by this app. Use the bundled examples for anything sensitive.
 
 - Rows audited: **8,000** of 8,000 in the file
 - Groups: **2** (A, B)

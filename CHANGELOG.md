@@ -5,6 +5,32 @@ Milestones are defined in `PLAN.md`; the reasoning behind design choices is in `
 
 ## [Unreleased]
 
+### M11, part 1 - ready for a public host - 2026-10-23
+
+Changed
+- The upload and audit caches in `app.py` now expire after 15 minutes and keep at most 3
+  entries (the bundled-example cache keeps 4). Before, every upload stayed in server memory
+  until the app restarted.
+- The privacy note no longer says "in memory only" and "never stored". It now says uploaded
+  data is held in server memory while you use the app, is not saved to a database or logs by
+  this app, and that the bundled examples are the right choice for anything sensitive. (The
+  PDF is written to a temporary directory for a moment, and the cache outlives a session, so
+  the old wording overstated.)
+- Upload cap lowered from 50 MB to 25 MB (`MAX_UPLOAD_MB` and `.streamlit/config.toml`).
+  A single 50 MB wide upload peaked near 430 MB here; 25 MB leaves room for a few visitors
+  sharing one process.
+
+Added
+- Tests that the caches are bounded, that the privacy note does not overstate, and that the
+  config cap matches the app and stays at or below 25 MB.
+
+Notes
+- The hosted demo itself is not deployed yet. This part only prepares the app.
+- The app boots with no errors from a clean environment built from `requirements.txt` with
+  both pip and uv (Streamlit Community Cloud installs with uv).
+- `examples/reports/compas_like.md` regenerated: only the privacy sentence in its header
+  changed.
+
 ### M10 - small-group intervals - 2026-10-23
 
 Changed
