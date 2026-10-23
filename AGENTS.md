@@ -27,7 +27,7 @@ honest communication rank above visual polish and feature count**. Concretely:
 | Milestone | **M11 done** (hosted demo, D16). No further planned milestones. |
 | Tests | 327 passing (1 skip), 98% coverage on `faircheck/` |
 | Quality gate | `ruff check` + `ruff format --check` + `mypy` + `pytest` all green |
-| Deployment | Live at https://faircheck.streamlit.app (Streamlit Community Cloud, Python 3.12, from `main`; every push redeploys, so keep CI green first). Do not take it down or change the host without being asked. Known open issue: D16 (three unexplained console 404s). |
+| Deployment | Live at https://faircheck.streamlit.app (Streamlit Community Cloud, Python 3.12, from `main`; every push redeploys, so keep CI green first). Do not take it down or change the host without being asked. If a push changes a `faircheck/` module and the live app shows an `ImportError`, reboot it from the Community Cloud dashboard (menu, Reboot); the old module stays in memory otherwise (D16). Known open issue: D16 (three unexplained console 404s). |
 
 ## How to work here
 

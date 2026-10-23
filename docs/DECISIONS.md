@@ -414,3 +414,11 @@ uploads go to a third-party host and points to the bundled examples for anything
 
 *Rollback.* Delete the app in the Community Cloud dashboard. The repository is unaffected.
 
+*Stale modules after a push.* A push redeploys the app, but the running process can keep the
+old version of a package it has already imported. After the upload fixes the live app showed
+`ImportError: cannot import name 'suggest_columns' from 'faircheck.validate'` even though the
+new file was on disk (the platform log showed the path and the missing name). A push that
+changes a module under `faircheck/` that `app.py` imports may need a reboot: in the Community
+Cloud dashboard open the app's menu and choose Reboot. A change to `app.py` alone did not
+need one. Check the live URL after such a push.
+
