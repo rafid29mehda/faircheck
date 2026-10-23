@@ -14,7 +14,13 @@ from pathlib import Path
 
 import pandas as pd
 
-from faircheck.bootstrap import DEFAULT_N_BOOT, MAX_T, BootstrapResult, bootstrap_audit
+from faircheck.bootstrap import (
+    ADAPTIVE,
+    DEFAULT_N_BOOT,
+    MAX_T,
+    BootstrapResult,
+    bootstrap_audit,
+)
 from faircheck.calibration import (
     DEFAULT_N_BINS,
     DEFAULT_SCORE_N_BOOT,
@@ -27,6 +33,7 @@ from faircheck.guidance import (
     format_interval,
     format_rate,
     format_score_estimate,
+    interval_method_note,
     recommend,
     summarize,
     verdict_for_gap,
@@ -85,6 +92,7 @@ def run_audit(
     n_bins: int = DEFAULT_N_BINS,
     score_n_boot: int = DEFAULT_SCORE_N_BOOT,
     adjust: str = MAX_T,
+    interval_method: str = ADAPTIVE,
     answers: GuidanceAnswers | None = None,
 ) -> AuditResult:
     """Validate, count, bootstrap, and (if scores are present) calibrate.
@@ -93,10 +101,14 @@ def run_audit(
     (D13); ``0`` turns them off, which matters on very large files because each resample
     costs O(rows). ``adjust`` picks how verdicts handle many comparisons: ``"max_t"``
     (default, simultaneous bands, D14) or ``"none"`` (each contrast on its own).
+    ``interval_method`` is ``"adaptive"`` (default: a Dirichlet posterior for groups with a
+    cell under 5 rows, the bootstrap otherwise, D15), ``"bootstrap"`` or ``"dirichlet"``.
     """
     data = validate(frame, mapping)
     counts = confusion_counts(data.y_true, data.y_pred, data.group_values, mapping.sensitive)
-    boot = bootstrap_audit(counts, n_boot=n_boot, seed=seed, adjust=adjust)
+    boot = bootstrap_audit(
+        counts, n_boot=n_boot, seed=seed, adjust=adjust, interval_method=interval_method
+    )
     impossibility = explain_impossibility(counts, reference_index=boot.reference_index)
     calibration = None
     if data.score is not None:
@@ -261,14 +273,20 @@ def _groups(audit: AuditResult) -> str:
             row.append(format_interval(*boot.rate_interval(spec.key, i)))
         rows.append(row)
     body = _markdown_table(headers, rows)
+    note = interval_method_note(boot)
+    method_note = f"\n\n{note}" if note else ""
+    intro = "Each cell is the point estimate and a 95% percentile bootstrap interval."
+    if note:
+        intro += " Small groups use a posterior interval instead (see the note below the table)."
+    intro += " `n/a` means the"
     return f"""## Per-group rates
 
-Each cell is the point estimate and a 95% percentile bootstrap interval. `n/a` means the
+{intro}
 rate's denominator was zero (for example TPR when a group has no positives).
 
 {body}
 
-Accuracy is reported for completeness; it is misleading under class imbalance."""
+Accuracy is reported for completeness; it is misleading under class imbalance.{method_note}"""
 
 
 def _gaps(audit: AuditResult) -> str:
@@ -519,6 +537,11 @@ def _methods(audit: AuditResult) -> str:
         method_note = (
             f" The verdict contrasts ({boot.family_size} of them) share one max-t bootstrap "
             "band (D14)."
+        )
+    if interval_method_note(boot) is not None:
+        method_note += (
+            " Groups with a cell under 5 rows use a Dirichlet posterior over the four cells "
+            "instead of the resampling bootstrap (D15)."
         )
     return f"""## Methods
 

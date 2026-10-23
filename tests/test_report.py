@@ -188,6 +188,24 @@ def test_report_states_how_verdicts_are_adjusted(hand_computed_frame: pd.DataFra
     assert "simultaneous" not in plain
 
 
+def test_report_says_which_groups_get_a_posterior_interval() -> None:
+    frame = cells_to_frame({"A": (40, 10, 10, 40), "B": (2, 3, 1, 20)})
+    markdown = render_markdown(run_audit(frame, _mapping(), n_boot=200, seed=0))
+    assert "Dirichlet" in markdown
+    assert "fewer than 5 rows" in markdown
+    classic = render_markdown(
+        run_audit(frame, _mapping(), n_boot=200, seed=0, interval_method="bootstrap")
+    )
+    assert "Dirichlet" not in classic
+
+
+def test_report_is_silent_about_posteriors_when_no_group_is_small(
+    hand_computed_frame: pd.DataFrame,
+) -> None:
+    markdown = render_markdown(run_audit(hand_computed_frame, _mapping(), n_boot=200, seed=0))
+    assert "Dirichlet" not in markdown
+
+
 def test_write_markdown_round_trips(hand_computed_frame: pd.DataFrame, tmp_path: Path) -> None:
     audit = run_audit(hand_computed_frame, _mapping(), n_boot=50, seed=0)
     dest = tmp_path / "report.md"

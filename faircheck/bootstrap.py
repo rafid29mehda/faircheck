@@ -46,6 +46,24 @@ NO_ADJUSTMENT: Final = "none"
 ADJUSTMENTS: Final = (MAX_T, NO_ADJUSTMENT)
 FAMILY_LEVEL: Final = 0.95
 
+#: How a group's resampled cell tables are produced (D15). ``adaptive`` picks per group:
+#: the resampling bootstrap (D4) where every cell is well populated, a Dirichlet posterior
+#: over the four cells where one is not. The bootstrap can only reproduce cells it has seen,
+#: so with a zero or tiny cell it is degenerate or far too narrow.
+BOOTSTRAP: Final = "bootstrap"
+DIRICHLET: Final = "dirichlet"
+ADAPTIVE: Final = "adaptive"
+INTERVAL_METHODS: Final = (ADAPTIVE, BOOTSTRAP, DIRICHLET)
+
+#: A group whose smallest cell is below this uses the posterior. Chosen from the coverage
+#: study in D15: the bootstrap is adequate once every observed cell is at least 2, and 5
+#: leaves a margin.
+MIN_CELL_FOR_BOOTSTRAP: Final = 5
+
+#: Pseudo-count added to each cell. 0.5 is the Jeffreys prior; aggregating cells, every
+#: rate that is a ratio of two cell sums then has a Beta posterior with that prior.
+POSTERIOR_PRIOR: Final = 0.5
+
 STRATIFIED: Final = "stratified"
 FULL: Final = "full"
 SCHEMES: Final = (STRATIFIED, FULL)
@@ -97,6 +115,43 @@ def bootstrap_counts(
         group_size = int(cells[index].sum())
         resampled[:, index, :] = rng.multinomial(group_size, _pvals(cells[index]), size=n_boot)
     return resampled
+
+
+def choose_methods(counts: GroupCounts, interval_method: str) -> tuple[str, ...]:
+    """The resampler for each group: forced for all, or ``adaptive`` on the smallest cell."""
+    if interval_method not in INTERVAL_METHODS:
+        raise ValueError(
+            f"interval_method must be one of {INTERVAL_METHODS}, got {interval_method!r}"
+        )
+    if interval_method != ADAPTIVE:
+        return (interval_method,) * counts.n_groups
+    return tuple(
+        DIRICHLET if int(counts.cells[index].min()) < MIN_CELL_FOR_BOOTSTRAP else BOOTSTRAP
+        for index in range(counts.n_groups)
+    )
+
+
+def posterior_counts(
+    counts: GroupCounts,
+    *,
+    n_boot: int = DEFAULT_N_BOOT,
+    seed: int = 0,
+    prior: float = POSTERIOR_PRIOR,
+) -> FloatArray:
+    """Posterior draws of each group's cell proportions, shaped ``(n_boot, n_groups, 4)``.
+
+    ``Dirichlet(cells + prior)`` per group. Every rate is a function of the proportions
+    alone (the metric functions are scale-free), so these draws go through the same
+    formulas as resampled counts. Uses its own seed stream so adding a small group never
+    changes the bootstrap draws of the others.
+    """
+    if n_boot < 1:
+        raise ValueError(f"n_boot must be at least 1, got {n_boot}")
+    rng = np.random.default_rng([seed, 1])
+    draws = np.empty((n_boot, counts.n_groups, N_CELLS), dtype=np.float64)
+    for index in range(counts.n_groups):
+        draws[:, index, :] = rng.dirichlet(counts.cells[index] + prior, size=n_boot)
+    return draws
 
 
 def _quantiles(samples: FloatArray, quantiles: Sequence[float]) -> FloatArray:
@@ -152,6 +207,9 @@ class BootstrapResult:
     family_size: int = 0
     critical_value: float = float("nan")
 
+    #: Per group, which resampler produced its intervals (D15).
+    interval_methods: tuple[str, ...] = ()
+
     @property
     def reference_label(self) -> str:
         return self.group_labels[self.reference_index]
@@ -206,6 +264,7 @@ def bootstrap_audit(
     scheme: str = STRATIFIED,
     reference_index: int | None = None,
     adjust: str = MAX_T,
+    interval_method: str = ADAPTIVE,
 ) -> BootstrapResult:
     """Compute every rate, gap and reference contrast with percentile intervals.
 
@@ -215,6 +274,7 @@ def bootstrap_audit(
     """
     if adjust not in ADJUSTMENTS:
         raise ValueError(f"adjust must be one of {ADJUSTMENTS}, got {adjust!r}")
+    methods = choose_methods(counts, interval_method)
     quantile_tuple = tuple(float(q) for q in quantiles)
     if not quantile_tuple:
         raise ValueError("At least one quantile is required.")
@@ -232,8 +292,18 @@ def bootstrap_audit(
     observed_rates = metrics.per_group_rates(counts.cells)
     observed_gaps = metrics.compute_gaps(observed_rates)
 
-    resampled = bootstrap_counts(counts, n_boot=n_boot, seed=seed, scheme=scheme)
+    resampled = bootstrap_counts(counts, n_boot=n_boot, seed=seed, scheme=scheme).astype(np.float64)
+    posterior_groups = [index for index, method in enumerate(methods) if method == DIRICHLET]
+    if posterior_groups:
+        posterior = posterior_counts(counts, n_boot=n_boot, seed=seed)
+        resampled[:, posterior_groups, :] = posterior[:, posterior_groups, :]
     sampled_rates = metrics.per_group_rates(resampled)
+    # The prior must not invent a rate the data cannot define (D3): a posterior group whose
+    # observed rate is undefined stays undefined in every draw.
+    for key, observed in observed_rates.items():
+        for index in posterior_groups:
+            if not np.isfinite(observed[index]):
+                sampled_rates[key][:, index] = np.nan
     sampled_gaps = metrics.compute_gaps(sampled_rates)
 
     observed_contrasts = _contrasts(observed_rates, reference)
@@ -268,6 +338,7 @@ def bootstrap_audit(
         adjusted_contrast_ci=bands,
         family_size=family_size,
         critical_value=critical_value,
+        interval_methods=methods,
     )
 
 

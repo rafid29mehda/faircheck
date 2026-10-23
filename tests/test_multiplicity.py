@@ -157,8 +157,13 @@ def test_a_single_group_has_no_family_and_no_verdict_to_adjust() -> None:
 
 def test_constant_contrasts_keep_their_sign_instead_of_being_widened() -> None:
     """A catches every positive and B misses every one: the TPR contrast is -1 in every resample."""
-    result = bootstrap_audit(_counts([[50, 0, 0, 50], [0, 0, 50, 50]]), n_boot=300, seed=0)
+    # Zero cells would switch these groups to the posterior (D15); this checks the bootstrap path.
+    result = bootstrap_audit(
+        _counts([[50, 0, 0, 50], [0, 0, 50, 50]]), n_boot=300, seed=0, interval_method="bootstrap"
+    )
     assert result.has_clear_contrast("tpr", 1) is True
     assert list(result.adjusted_contrast_ci["tpr"][:, 1]) == [-1.0, -1.0]
-    same = bootstrap_audit(_counts([[50, 0, 0, 50], [50, 0, 0, 50]]), n_boot=300, seed=0)
+    same = bootstrap_audit(
+        _counts([[50, 0, 0, 50], [50, 0, 0, 50]]), n_boot=300, seed=0, interval_method="bootstrap"
+    )
     assert same.has_clear_contrast("tpr", 1) is False

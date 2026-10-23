@@ -166,8 +166,11 @@ Provenance and regeneration: [`examples/README.md`](examples/README.md).
 
 - **Classification only**, binary internally. Multi-class columns are one-vs-rest
   against the chosen positive label, with a warning.
-- Percentile bootstrap **under-covers** very small or zero-count cells. Groups with
-  n < 30 are flagged; do not over-read a quiet cell.
+- The percentile bootstrap cannot produce a cell it never saw, so with a zero or tiny cell
+  it is degenerate or far too narrow (95% intervals covered the true TPR 26% of the time
+  at n = 20). Groups with any cell under 5 rows therefore use a Dirichlet(0.5) posterior
+  instead (D15; `--intervals bootstrap` turns this off). Groups with n < 30 are still
+  flagged: even a good interval on 20 rows is wide, so do not over-read it.
 - Score metrics (ROC-AUC, ECE) use row-level resampling, not the multinomial
   fast path (D13), so they cost O(rows) per resample and default to 200 resamples. A group
   with only one class has ROC-AUC `n/a`, not 0.5. The ECE interval is not a calibrated

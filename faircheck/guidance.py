@@ -13,7 +13,14 @@ from enum import Enum
 
 import numpy as np
 
-from faircheck.bootstrap import MAX_T, VERDICT_RATE_KEYS, BootstrapResult
+from faircheck.bootstrap import (
+    DIRICHLET,
+    MAX_T,
+    MIN_CELL_FOR_BOOTSTRAP,
+    POSTERIOR_PRIOR,
+    VERDICT_RATE_KEYS,
+    BootstrapResult,
+)
 from faircheck.impossibility import ImpossibilityResult
 from faircheck.metrics import RATES_BY_KEY, GapSpec
 from faircheck.types import GroupCounts
@@ -264,6 +271,25 @@ def verdict_for_gap(spec: GapSpec, boot: BootstrapResult) -> str:
     if flags and all(flag is None for flag in flags):
         return "not computable"
     return "no clear evidence vs reference"
+
+
+def interval_method_note(boot: BootstrapResult) -> str | None:
+    """Which groups got a posterior interval and why; ``None`` if every group is bootstrapped."""
+    groups = [
+        label
+        for label, method in zip(boot.group_labels, boot.interval_methods, strict=False)
+        if method == DIRICHLET
+    ]
+    if not groups:
+        return None
+    names = ", ".join(groups)
+    return (
+        f"Interval method: {names} use{'s' if len(groups) == 1 else ''} a Dirichlet"
+        f"({POSTERIOR_PRIOR}) posterior over the four cells instead of the resampling "
+        f"bootstrap. A forced choice or a cell with fewer than {MIN_CELL_FOR_BOOTSTRAP} rows "
+        "is the reason: the bootstrap cannot produce a cell it never saw, so there it is "
+        "degenerate or far too narrow (D15). Rates that are undefined stay `n/a`."
+    )
 
 
 def format_rate(value: float) -> str:

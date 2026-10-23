@@ -12,6 +12,7 @@ from faircheck.guidance import (
     ScoreReading,
     format_interval,
     format_rate,
+    interval_method_note,
     recommend,
     summarize,
     verdict_for_gap,
@@ -178,3 +179,18 @@ def test_summary_makes_no_adjustment_claim_when_adjustment_is_off() -> None:
     impossibility = explain_impossibility(counts, reference_index=boot.reference_index)
     joined = " ".join(summarize(boot, counts, impossibility))
     assert "adjusting" not in joined
+
+
+def test_interval_method_note_names_only_the_posterior_groups() -> None:
+    boot = bootstrap_audit(counts_from([(300, 150, 200, 350), (3, 40, 60, 200)]), n_boot=200)
+    note = interval_method_note(boot)
+    assert note is not None
+    assert "B" in note
+    assert "Dirichlet" in note
+    assert "fewer than 5 rows" in note
+    assert "A and" not in note
+
+
+def test_interval_method_note_is_silent_when_every_group_uses_the_bootstrap() -> None:
+    boot = bootstrap_audit(counts_from([(300, 150, 200, 350), (280, 160, 220, 340)]), n_boot=200)
+    assert interval_method_note(boot) is None

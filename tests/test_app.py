@@ -111,3 +111,19 @@ def test_app_gaps_tab_says_verdicts_are_simultaneous() -> None:
     at.run()
     assert len(at.exception) == 0
     assert "simultaneous" in _markdown_text(at)
+
+
+@pytest.mark.filterwarnings(_APPTEST_WARNINGS[0])
+@pytest.mark.filterwarnings(_APPTEST_WARNINGS[1])
+def test_app_says_which_small_groups_use_a_posterior() -> None:
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_file(str(APP), default_timeout=90)
+    at.run()
+    assert not any("Dirichlet" in c.value for c in at.caption)
+    example = next(s for s in at.selectbox if s.label == "Example")
+    example.select("acs_income").run()
+    second = next(s for s in at.selectbox if s.label.startswith("Second sensitive"))
+    second.select("race").run()
+    assert len(at.exception) == 0
+    assert any("Dirichlet" in c.value for c in at.caption)

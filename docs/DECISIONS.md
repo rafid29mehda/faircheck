@@ -295,3 +295,72 @@ which suits a later subgroup search better than a fixed family).
 contrast that flips under adjustment, and a deliberate mutation (critical value fixed at
 1.96) that made five tests fail.
 
+## D15 - Small groups: Dirichlet posterior intervals, chosen by the smallest cell
+**2026-10-23 · accepted (implemented in M10)**
+
+*Problem.* The percentile bootstrap of D4 resamples the observed cells, so it can only
+produce a cell it has already seen. A group with a zero cell gets a degenerate interval, and
+one with a tiny cell gets one that is far too narrow. The old `n < 30` flag was meant to
+cover this, but group size is the wrong thing to look at. Measured with
+`experiments/small_group_coverage.py` (fixed truth, base rate 0.3, 95% interval for TPR):
+
+| n | true TPR | bootstrap covers | Dirichlet(0.5) covers |
+|---|---|---|---|
+| 20 | 0.50 / 0.80 / 0.95 | 0.900 / 0.690 / 0.256 | 0.933 / 0.963 / 0.967 |
+| 40 | 0.50 / 0.80 / 0.95 | 0.960 / 0.906 / 0.452 | 0.956 / 0.940 / 0.973 |
+| 100 | 0.50 / 0.80 / 0.95 | 0.948 / 0.921 / 0.785 | 0.938 / 0.933 / 0.971 |
+| 400 | 0.50 / 0.80 / 0.95 | 0.953 / 0.953 / 0.939 | 0.943 / 0.953 / 0.954 |
+
+At n = 100 with a true TPR of 0.95 the bootstrap still misses 21% of the time, well past the
+`n < 30` line. What matters is the smallest observed cell:
+
+| smallest observed cell | cases | bootstrap | Dirichlet(0.5) |
+|---|---|---|---|
+| 0 | 9171 | 0.558 | 0.948 |
+| 1 | 5152 | 0.936 | 0.948 |
+| 2-4 | 8228 | 0.946 | 0.947 |
+| 5-9 | 5836 | 0.946 | 0.943 |
+| 10 and up | 19484 | 0.944 to 0.948 | 0.940 to 0.944 |
+
+(Second table: truths drawn from a Dirichlet(0.7) over the four cells, all four verdict rates.
+That setup favours the posterior by construction, so read it for *where* the bootstrap breaks,
+a zero cell, and not for the size of the gap. The first table is the neutral one.)
+
+*Decision.* A group whose smallest cell is below `MIN_CELL_FOR_BOOTSTRAP = 5` gets
+`Dirichlet(cells + 0.5)` draws of its cell proportions instead of multinomial resamples. 0.5
+is the Jeffreys prior: any rate that is a ratio of two cell sums then has a Beta posterior with
+that prior. Rates are scale-free functions of the cells, so the draws go through the same
+formulas, the same percentile intervals and the same max-t bands (D14). Groups at or above the
+threshold keep the D4 bootstrap exactly, so large-group numbers and the committed report are
+byte-identical to before. The posterior uses its own seed stream, so a small group never
+changes another group's draws. Threshold 5 sits above the measured break (2) as a margin.
+
+*Undefined stays undefined (D3).* The prior must not invent a rate the data cannot define: a
+posterior group whose observed rate is undefined (no positives, so no TPR) keeps `NaN` in every
+draw. Its interval is `n/a`, its undefined fraction is 1.0 and its verdict is `None`.
+
+*Effect on the bundled data.* The four single-attribute examples are unchanged (no group has a
+cell under 5). On ACS Income sex x race, 6 of 16 groups switch. Female x NHPI (n = 20, no true
+positives found) goes from a TPR interval of [0.00, 0.00] to [0.00, 0.43]; Female x Alaska
+Native (n = 2) from [1.00, 1.00] to [0.16, 1.00].
+
+*Changes in behaviour.* Posterior groups never lose a class in a resample, so their
+`rate_undefined_fraction` is 0 unless the observed rate is undefined. `--intervals bootstrap`
+(`interval_method="bootstrap"`) restores the old behaviour for every group.
+
+*Related work.* Ferrara et al. (NeurIPS 2025) combine analytic intervals for large subgroups
+with a Dirichlet-multinomial Bayesian estimator for small intersectional ones. This decision
+follows the same idea (a posterior for small cells) but is my own construction on this
+project's cell tables, with its own coverage study. I have not compared it against their
+method.
+
+*Not done.* The posterior intervals are credible intervals under a Jeffreys prior, not
+frequentist guarantees; the first table is the evidence for their coverage, over a limited
+grid. Wilson or Clopper-Pearson intervals for single proportions are a fair comparison I did
+not run. The `n < 30` flag stays: it says the estimate is imprecise, which is true however the
+interval is built.
+*Guards:* `tests/test_small_groups.py`: the rule, a zero cell, a coverage regression (adaptive
+96.8% against 44.4% for the bootstrap at n = 40, TPR 0.95), undefined rates, verdict
+integration, and two deliberate mutations (rule disabled; undefined mask removed) that failed
+seven tests and one test respectively.
+

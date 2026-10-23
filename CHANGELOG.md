@@ -5,6 +5,32 @@ Milestones are defined in `PLAN.md`; the reasoning behind design choices is in `
 
 ## [Unreleased]
 
+### M10 - small-group intervals - 2026-10-23
+
+Changed
+- A group with any cell under 5 rows now gets a Dirichlet(0.5) posterior over its four cells
+  instead of the resampling bootstrap (D15). The bootstrap cannot produce a cell it never
+  saw, so for a zero or tiny cell it was degenerate or far too narrow: 95% intervals covered
+  the true TPR 25.6% of the time at n = 20. Larger groups, and every bundled single-attribute
+  example, are unchanged.
+- Undefined rates stay `n/a` under the posterior (D3).
+
+Added
+- `bootstrap_audit(interval_method="adaptive" | "bootstrap" | "dirichlet")`,
+  `run_audit(interval_method=...)`, CLI `--intervals`.
+- `bootstrap.choose_methods`, `bootstrap.posterior_counts`, `MIN_CELL_FOR_BOOTSTRAP`,
+  `POSTERIOR_PRIOR`; `BootstrapResult.interval_methods`; `guidance.interval_method_note`.
+- The report and the Groups tab say which groups use a posterior and why.
+- `experiments/small_group_coverage.py`: the reproducible coverage study behind D15.
+- `tests/test_small_groups.py` (12 tests).
+
+Notes
+- ACS Income sex x race: 6 of 16 groups switch. Female x NHPI (n = 20) TPR interval
+  [0.00, 0.00] becomes [0.00, 0.43].
+- Test count 286 -> 304 passed (1 skip); coverage of `faircheck/` stays 98%.
+- Two existing tests pin `interval_method="bootstrap"` because they test bootstrap-only
+  behaviour (a resample losing its positives; a constant contrast).
+
 ### M9 - simultaneous verdicts - 2026-10-23
 
 Changed

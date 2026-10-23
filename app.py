@@ -23,6 +23,7 @@ from faircheck.guidance import (
     format_interval,
     format_rate,
     format_score_estimate,
+    interval_method_note,
     recommend,
     verdict_for_gap,
 )
@@ -383,6 +384,9 @@ def _tab_groups(audit: AuditResult) -> None:
             format_interval(*boot.rate_interval(spec.key, i)) for i in range(counts.n_groups)
         ]
     st.dataframe(pd.DataFrame(table), hide_index=True, width="stretch")
+    method_note = interval_method_note(boot)
+    if method_note is not None:
+        st.caption(method_note)
     chart = _selection_chart(audit)
     if chart is not None:
         st.altair_chart(chart, width="stretch")

@@ -248,3 +248,25 @@ def test_adjust_flag_switches_the_verdict_adjustment_off(tmp_path: Path) -> None
         out = tmp_path / f"report_{flag}.md"
         assert main([*base, "--adjust", flag, "--out", str(out)]) == 0
         assert ("max-t" in out.read_text(encoding="utf-8")) is expect_max_t
+
+
+def test_intervals_flag_forces_the_posterior_for_every_group(tmp_path: Path) -> None:
+    csv_path = _write_csv(tmp_path / "preds.csv")
+    base = [
+        "report",
+        str(csv_path),
+        "--label",
+        "y_true",
+        "--pred",
+        "y_pred",
+        "--group",
+        "group",
+        "--positive",
+        "1",
+        "--n-boot",
+        "50",
+    ]
+    for flag, expect_posterior in (("bootstrap", False), ("dirichlet", True)):
+        out = tmp_path / f"report_{flag}.md"
+        assert main([*base, "--intervals", flag, "--out", str(out)]) == 0
+        assert ("Dirichlet" in out.read_text(encoding="utf-8")) is expect_posterior

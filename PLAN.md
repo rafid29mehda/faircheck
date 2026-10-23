@@ -397,6 +397,8 @@ caller of a library that runs anywhere.
 
 - [x] **M9 - Simultaneous verdicts (D14).** Verdicts are judged against max-t bootstrap bands over the four headline contrasts instead of one 95% interval each; `--adjust none` keeps the old rule. *Delivered 2026-10-23: 286 tests passing (1 skip). On a null case the false-finding rate fell from 31.7% to 6.3%.*
 
+- [x] **M10 - Small-group intervals (D15).** Groups with a cell under 5 rows get a Dirichlet(0.5) posterior instead of the resampling bootstrap; `--intervals` selects the method. Evidence in `experiments/small_group_coverage.py`. *Delivered 2026-10-23: 304 tests passing (1 skip). At n = 20 and true TPR 0.95 the bootstrap covered 25.6% of the time, the posterior 96.7%.*
+
 Each milestone ends with: run the tests, show you real output, tick the box here, **stop for your go-ahead.**
 
 ---

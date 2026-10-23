@@ -233,7 +233,9 @@ def test_occasionally_undefined_rate_keeps_its_interval_and_reports_the_fraction
     """
     counts = counts_from([(40, 10, 10, 40), (1, 5, 1, 45)])
 
-    result = bootstrap_audit(counts, n_boot=2000, seed=0)
+    # The adaptive rule would give this group a posterior, which never loses a class (D15);
+    # this test is about the resampling bootstrap, so it pins that method.
+    result = bootstrap_audit(counts, n_boot=2000, seed=0, interval_method="bootstrap")
 
     low, point, high = result.rate_interval("tpr", 1)
     assert np.isfinite(low) and np.isfinite(point) and np.isfinite(high)

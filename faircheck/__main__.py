@@ -9,7 +9,7 @@ import argparse
 import sys
 from collections.abc import Sequence
 
-from faircheck.bootstrap import ADJUSTMENTS, MAX_T
+from faircheck.bootstrap import ADAPTIVE, ADJUSTMENTS, INTERVAL_METHODS, MAX_T
 from faircheck.calibration import DEFAULT_SCORE_N_BOOT
 from faircheck.guidance import DecisionKind, GuidanceAnswers, LabelTrust, ScoreReading
 from faircheck.report import render_markdown, run_audit, write_markdown, write_pdf
@@ -72,6 +72,16 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     report.add_argument(
+        "--intervals",
+        choices=INTERVAL_METHODS,
+        default=ADAPTIVE,
+        dest="intervals",
+        help=(
+            "How group rates get their intervals: adaptive (default) uses a Dirichlet "
+            "posterior for groups with a cell under 5 rows and the bootstrap otherwise."
+        ),
+    )
+    report.add_argument(
         "--out",
         default=None,
         help="Markdown destination. Default: stdout.",
@@ -122,6 +132,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             n_boot=args.n_boot,
             score_n_boot=args.score_n_boot,
             adjust=args.adjust,
+            interval_method=args.intervals,
             seed=args.seed,
             answers=_answers(args),
         )
