@@ -5,6 +5,28 @@ Milestones are defined in `PLAN.md`; the reasoning behind design choices is in `
 
 ## [Unreleased]
 
+### M11, part 2 - hosted demo live - 2026-10-23
+
+Added
+- The app is deployed at https://faircheck.streamlit.app (Streamlit Community Cloud, Python
+  3.12, from `main`). D16 records the deployment, what was checked on the live URL, and the
+  platform facts that are unverified.
+- README links the demo and says what it means: it can sleep, uploads are capped at 25 MB
+  and go to a third-party host.
+
+Changed
+- `tests/test_readme.py`: the README must contain exactly the demo link, mention sleeping,
+  the third-party host and the 25 MB cap. The old "no demo URL" assertions are gone.
+
+Known issues (not fixed, see D16)
+- An empty upload shows a raw pandas error instead of the library's "That file is empty".
+- After an upload the mapping dropdowns default to the first column and the positive outcome
+  to the first value, which can silently invert the analysis.
+
+Notes
+- The live Markdown report for the COMPAS-like example is byte-identical to
+  `examples/reports/compas_like.md`.
+
 ### M11, part 1 - ready for a public host - 2026-10-23
 
 Changed

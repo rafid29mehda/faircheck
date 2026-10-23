@@ -21,7 +21,10 @@ impossibility results. CLI, pytest suite, CI.
 
 Source: https://github.com/rafid29mehda/faircheck
 
-Run it locally (below). There is no hosted demo yet.
+Live demo: https://faircheck.streamlit.app (Streamlit Community Cloud, free tier). If nobody
+has opened it for a while it goes to sleep, so the first load can take a while. Uploads are
+capped at 25 MB and go to a third-party host, so use the bundled examples for anything
+sensitive, or run it locally (below).
 
 ![FairCheck Groups tab on the bundled COMPAS-like example: two groups, selection-rate
 bars with interval whiskers, and a hedged plain-language summary.](docs/images/compas_like_groups.png)
@@ -178,7 +181,7 @@ Provenance and regeneration: [`examples/README.md`](examples/README.md).
 - Intersectional cells are small by construction.
 - The multiplicity adjustment covers the four headline rates against one reference group
   (D14). It does not cover other attributes you audit separately or repeated re-runs.
-- No mitigation, no causal claims, no hosted demo yet.
+- No mitigation, no causal claims.
 
 Screening tool. Not a legal or causal conclusion.
 

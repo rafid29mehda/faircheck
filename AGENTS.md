@@ -23,12 +23,11 @@ honest communication rank above visual polish and feature count**. Concretely:
 
 | | |
 |---|---|
-| Phase | 2 (execution). Plan approved 2026-09-21. **M1-M10 complete.** |
-| Milestone | **M10 done** (small-group intervals, D15). No further planned milestones. |
+| Phase | 2 (execution). Plan approved 2026-09-21. **M1-M11 complete.** |
+| Milestone | **M11 done** (hosted demo, D16). No further planned milestones. |
 | Tests | 304 passing (1 skip), 98% coverage on `faircheck/` |
 | Quality gate | `ruff check` + `ruff format --check` + `mypy` + `pytest` all green |
-| In progress | M11 hosted demo: pre-deploy hardening done; the deploy itself still needs an explicit go-ahead |
-| Deployment | GitHub is public (`rafid29mehda/faircheck`). Do not deploy a hosted demo without being asked. |
+| Deployment | Live at https://faircheck.streamlit.app (Streamlit Community Cloud, Python 3.12, from `main`; every push redeploys, so keep CI green first). Do not take it down or change the host without being asked. Known app issues: D16. |
 
 ## How to work here
 

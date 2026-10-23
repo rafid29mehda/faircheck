@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -38,11 +39,23 @@ def test_readme_numbers_come_from_the_committed_report() -> None:
         assert snippet in readme, snippet
 
 
+DEMO_URL = "https://faircheck.streamlit.app"
+
+
+def test_readme_links_the_hosted_demo_and_says_what_that_means() -> None:
+    raw = README.read_text(encoding="utf-8")
+    links = re.findall(r"https://[\w.-]+\.streamlit\.app\b", raw)
+    assert links == [DEMO_URL], links
+    lowered = raw.lower()
+    assert "no hosted demo" not in lowered
+    assert "goes to sleep" in lowered
+    assert "third-party" in lowered
+    assert "25 mb" in lowered
+
+
 def test_readme_does_not_overclaim_a_demo_or_a_grade() -> None:
     raw = README.read_text(encoding="utf-8")
     readme = raw.lower()
-    assert "live demo" not in readme
-    assert "streamlit.app" not in readme
     assert "huggingface.co/spaces" not in readme
     assert "fairness grade" in readme
     assert "not a legal" in readme

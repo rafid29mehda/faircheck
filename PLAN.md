@@ -399,7 +399,7 @@ caller of a library that runs anywhere.
 
 - [x] **M10 - Small-group intervals (D15).** Groups with a cell under 5 rows get a Dirichlet(0.5) posterior instead of the resampling bootstrap; `--intervals` selects the method. Evidence in `experiments/small_group_coverage.py`. *Delivered 2026-10-23: 304 tests passing (1 skip). At n = 20 and true TPR 0.95 the bootstrap covered 25.6% of the time, the posterior 96.7%.*
 
-- [ ] **M11 - Hosted demo on Streamlit Community Cloud.** Part 1 (done 2026-10-23): bounded upload caches, accurate privacy note, 25 MB upload cap. Part 2 (waits for your go-ahead): deploy, smoke test, then replace the "no hosted demo" claims in the README and tests.
+- [x] **M11 - Hosted demo on Streamlit Community Cloud (D16).** Bounded upload caches, accurate privacy note, 25 MB upload cap, then deployed at https://faircheck.streamlit.app and smoke-tested. *Delivered 2026-10-23. The live Markdown report matches the committed one byte for byte. Two app defects found on the live app (empty-file error, upload defaults) are recorded in D16 and not fixed yet.*
 
 Each milestone ends with: run the tests, show you real output, tick the box here, **stop for your go-ahead.**
 

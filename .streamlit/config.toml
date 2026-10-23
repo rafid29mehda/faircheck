@@ -5,5 +5,5 @@ maxUploadSize = 25
 gatherUsageStats = false
 
 [client]
-# D10: hosting is deferred; the Cloud deploy control would over-claim.
+# Hosted on Streamlit Community Cloud (D16); keep the toolbar minimal for visitors.
 toolbarMode = "minimal"

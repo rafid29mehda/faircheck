@@ -364,3 +364,47 @@ interval is built.
 integration, and two deliberate mutations (rule disabled; undefined mask removed) that failed
 seven tests and one test respectively.
 
+## D16 - Hosted demo on Streamlit Community Cloud
+**2026-10-23 · accepted (supersedes the deferral in D10)**
+
+D10 deferred hosting until it was asked for. It was asked for, so the app is live at
+https://faircheck.streamlit.app, deployed from `main` (`app.py`, Python 3.12, no secrets).
+Every push to `main` redeploys it, so push only after CI is green.
+
+*Deployment notes.* The first build took about 50 seconds. The Python version dropdown
+defaulted to 3.14, not the 3.12 the docs describe; it was set to 3.12, the version CI and the
+pins are verified on. The subdomain `faircheck` was free. Before deploying, the app booted
+with no errors from clean environments built from `requirements.txt` with both pip and uv
+(the installer Community Cloud uses), and a 50 MB wide upload peaked near 430 MB.
+
+*What was checked on the live URL.* The Markdown report for the COMPAS-like example is
+byte-identical to `examples/reports/compas_like.md` (SHA-256 `8b3869af...17a8`, 7,538 bytes).
+Near-fair gives "no clear evidence" for all four contrasts. ACS Income with a second
+attribute `race` shows 16 groups, 4 with n < 30, and the Dirichlet note names the same six
+groups as a local run. The hand-computed case, uploaded and mapped, gives the same selection
+gap (30 points lower, CI -42 to -17) and "no clear evidence" elsewhere. The PDF download is a
+valid PDF. The uploader shows the 25 MB cap. A non-CSV text file produces warnings and no
+crash.
+
+*Found on the live app and not fixed yet.*
+1. An empty upload shows a raw `pandas.errors.EmptyDataError`. `validate.read_csv` already
+   has a clear message ("That file is empty"), but the app's `_load_upload` calls
+   `pd.read_csv` directly and skips it.
+2. After an upload, every mapping dropdown defaults to the first column, and the positive
+   outcome defaults to the first value (often `0`). A CSV in the README's own format arrives
+   with label, prediction and group all set to `y_true`, and a positive outcome of 0 silently
+   inverts the analysis. The app warns about the duplicated column but not about the inverted
+   outcome.
+3. The browser console shows three 404s on static resources. They were not identified and
+   nothing visible depends on them.
+
+*Not tested live.* A 25 MB upload, how long a wake-up from sleep takes, phone layout and
+concurrent visitors.
+
+*Unverified platform facts.* The resource limits (about 690 MB to 2.7 GB of memory), the
+12-hour sleep window and "no paid tier" come from forum posts, not Streamlit's docs. The
+platform's own logging of uploads is not documented in what was checked. The README says
+uploads go to a third-party host and points to the bundled examples for anything sensitive.
+
+*Rollback.* Delete the app in the Community Cloud dashboard. The repository is unaffected.
+
