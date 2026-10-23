@@ -5,6 +5,25 @@ Milestones are defined in `PLAN.md`; the reasoning behind design choices is in `
 
 ## [Unreleased]
 
+### M11, part 3 - upload fixes - 2026-10-23
+
+Fixed (both found by smoke-testing the live demo, D16)
+- An empty or header-only upload now shows the library's clear message in an error box
+  instead of a raw pandas exception. Uploads go through `validate.read_csv`.
+- Uploads no longer arrive with every dropdown on the first column and a positive outcome of
+  0. Column roles are guessed from common names and the positive outcome from the values
+  (1, true, yes, pos, else the last sorted value); the sidebar says they are guesses.
+
+Added
+- `validate.suggest_columns` / `ColumnSuggestion` and `validate.suggest_positive_label`.
+- Tests: the guessing rules (names, case, synonyms, no column reused, single column), and
+  app tests that upload an empty file, a header-only file, the README's documented format,
+  and a yes/no file.
+
+Notes
+- Bundled examples keep their stored mappings and are unchanged.
+- The three console 404s seen on the live page are still unidentified (D16).
+
 ### M11, part 2 - hosted demo live - 2026-10-23
 
 Added

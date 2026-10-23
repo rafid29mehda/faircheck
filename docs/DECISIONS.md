@@ -386,16 +386,22 @@ gap (30 points lower, CI -42 to -17) and "no clear evidence" elsewhere. The PDF 
 valid PDF. The uploader shows the 25 MB cap. A non-CSV text file produces warnings and no
 crash.
 
-*Found on the live app and not fixed yet.*
-1. An empty upload shows a raw `pandas.errors.EmptyDataError`. `validate.read_csv` already
-   has a clear message ("That file is empty"), but the app's `_load_upload` calls
-   `pd.read_csv` directly and skips it.
-2. After an upload, every mapping dropdown defaults to the first column, and the positive
-   outcome defaults to the first value (often `0`). A CSV in the README's own format arrives
-   with label, prediction and group all set to `y_true`, and a positive outcome of 0 silently
-   inverts the analysis. The app warns about the duplicated column but not about the inverted
-   outcome.
-3. The browser console shows three 404s on static resources. They were not identified and
+*Found on the live app, items 1 and 2 fixed afterwards (M11, part 3).*
+1. An empty upload showed a raw `pandas.errors.EmptyDataError`. `validate.read_csv` already
+   had a clear message ("That file is empty"), but the app's `_load_upload` called
+   `pd.read_csv` directly and skipped it. The app now uses `read_csv` and shows the
+   library's message (and its "header but no data rows" and "not UTF-8" messages) in an
+   error box.
+2. After an upload, every mapping dropdown defaulted to the first column, and the positive
+   outcome to the first value (often `0`). A CSV in the README's own format arrived with
+   label, prediction and group all set to `y_true`, and a positive outcome of 0 silently
+   inverted the analysis. `validate.suggest_columns` now guesses roles from common column
+   names (never reusing a column, skipping id-like columns when falling back), and
+   `suggest_positive_label` prefers a value that reads as "yes" (1, true, yes, pos), else the
+   last value in sorted order. The sidebar says these are guesses to check. Bundled examples
+   keep their stored mappings. The score column is only ever matched by name, never by
+   position.
+3. (Still open) The browser console shows three 404s on static resources. They were not identified and
    nothing visible depends on them.
 
 *Not tested live.* A 25 MB upload, how long a wake-up from sleep takes, phone layout and

@@ -38,7 +38,14 @@ from faircheck.report import (
     write_pdf,
 )
 from faircheck.types import ColumnMapping
-from faircheck.validate import SMALL_GROUP_THRESHOLD, ValidationError, label_options
+from faircheck.validate import (
+    SMALL_GROUP_THRESHOLD,
+    ValidationError,
+    label_options,
+    read_csv,
+    suggest_columns,
+    suggest_positive_label,
+)
 
 # Okabe-Ito qualitative palette (https://jfly.uni-koeln.de/color/). Colour is never
 # the only encoding: every series also has a distinct marker and a direct label.
@@ -90,7 +97,7 @@ def _load_example(key: str) -> pd.DataFrame:
 
 @st.cache_data(show_spinner=False, ttl=UPLOAD_CACHE_TTL_S, max_entries=3)
 def _load_upload(data: bytes, name: str) -> pd.DataFrame:
-    return pd.read_csv(io.BytesIO(data))
+    return read_csv(io.BytesIO(data))
 
 
 @st.cache_data(show_spinner="Running the audit...", ttl=UPLOAD_CACHE_TTL_S, max_entries=3)
@@ -605,10 +612,23 @@ def _tab_impossibility(audit: AuditResult) -> None:
 
 def _sidebar_mapping(frame: pd.DataFrame, preferred: ColumnMapping | None) -> ColumnMapping:
     columns = list(map(str, frame.columns))
-    pref_label = preferred.label if preferred and preferred.label in columns else None
-    pref_pred = preferred.prediction if preferred and preferred.prediction in columns else None
-    pref_score = preferred.score if preferred and preferred.score in columns else None
-    pref_sens = list(preferred.sensitive) if preferred else []
+    pref_label: str | None
+    pref_pred: str | None
+    pref_score: str | None
+    pref_sens: list[str]
+    if preferred is None:
+        guess = suggest_columns(columns)
+        pref_label, pref_pred, pref_score = guess.label, guess.prediction, guess.score
+        pref_sens = [guess.sensitive]
+        st.sidebar.caption(
+            "Columns and the positive outcome were guessed from names and values. "
+            "Check them before reading the report."
+        )
+    else:
+        pref_label = preferred.label if preferred.label in columns else None
+        pref_pred = preferred.prediction if preferred.prediction in columns else None
+        pref_score = preferred.score if preferred.score in columns else None
+        pref_sens = list(preferred.sensitive)
 
     label = st.sidebar.selectbox("True label", columns, index=_index(columns, pref_label))
     prediction = st.sidebar.selectbox("Predicted label", columns, index=_index(columns, pref_pred))
@@ -641,7 +661,7 @@ def _sidebar_mapping(frame: pd.DataFrame, preferred: ColumnMapping | None) -> Co
         st.stop()
         raise
     positive_pref = (
-        str(preferred.positive_label) if preferred is not None else (options[0] if options else "1")
+        str(preferred.positive_label) if preferred is not None else suggest_positive_label(options)
     )
     if len(options) <= 6:
         positive = st.sidebar.radio(
@@ -696,7 +716,12 @@ def main() -> None:
             st.info("Upload a CSV in the sidebar, or switch to a bundled example.")
             st.stop()
             return
-        frame = _load_upload(uploaded.getvalue(), uploaded.name)
+        try:
+            frame = _load_upload(uploaded.getvalue(), uploaded.name)
+        except ValidationError as exc:
+            st.error(str(exc))
+            st.stop()
+            return
 
     st.sidebar.subheader("Column mapping")
     mapping = _sidebar_mapping(frame, preferred)

@@ -14,10 +14,13 @@ import pytest
 
 from faircheck.types import ColumnMapping
 from faircheck.validate import (
+    ColumnSuggestion,
     ValidationError,
     label_options,
     read_csv,
     resolve_positive_label,
+    suggest_columns,
+    suggest_positive_label,
     validate,
 )
 from tests.conftest import cells_to_frame
@@ -218,3 +221,65 @@ def test_read_csv_round_trips_a_normal_file(frame: pd.DataFrame) -> None:
 def test_mapping_requires_a_sensitive_column() -> None:
     with pytest.raises(ValueError, match="sensitive column"):
         ColumnMapping(label="y", prediction="p", sensitive=(), positive_label=1)
+
+
+# --------------------------------------------------------------------------------------
+# Guessing a mapping for an uploaded file (the app's defaults)
+# --------------------------------------------------------------------------------------
+
+
+def test_suggest_columns_recognises_the_documented_names() -> None:
+    suggestion = suggest_columns(["y_true", "y_pred", "score", "group"])
+    assert suggestion == ColumnSuggestion(
+        label="y_true", prediction="y_pred", score="score", sensitive="group"
+    )
+
+
+def test_suggest_columns_ignores_case_spacing_and_common_synonyms() -> None:
+    suggestion = suggest_columns(["Actual", "Predicted", "Risk Score", "Sex"])
+    assert suggestion.label == "Actual"
+    assert suggestion.prediction == "Predicted"
+    assert suggestion.score == "Risk Score"
+    assert suggestion.sensitive == "Sex"
+
+
+def test_suggest_columns_never_reuses_a_column_for_two_roles() -> None:
+    """Unrecognised names fall back to the first unused columns, in order, never the same one."""
+    suggestion = suggest_columns(["a", "b", "c", "d"])
+    picked = [suggestion.label, suggestion.prediction, suggestion.sensitive]
+    assert picked == ["a", "b", "c"]
+    assert suggestion.score is None
+
+
+def test_suggest_columns_keeps_a_recognised_name_when_others_are_unrecognised() -> None:
+    suggestion = suggest_columns(["id", "y_true", "outcome_guess", "region"])
+    assert suggestion.label == "y_true"
+    assert suggestion.prediction != suggestion.label
+    assert suggestion.sensitive not in (suggestion.label, suggestion.prediction)
+    assert "id" not in (suggestion.prediction, suggestion.sensitive)
+
+
+def test_suggest_columns_copes_with_a_single_column() -> None:
+    suggestion = suggest_columns(["only"])
+    assert suggestion.label == "only"
+    assert suggestion.score is None
+
+
+@pytest.mark.parametrize(
+    ("options", "expected"),
+    [
+        (("0", "1"), "1"),
+        (("False", "True"), "True"),
+        (("no", "yes"), "yes"),
+        (("No", "Yes"), "Yes"),
+        (("neg", "pos"), "pos"),
+        (("<=50K", ">50K"), ">50K"),
+        (("A", "B", "C"), "C"),
+        (("1",), "1"),
+        ((), "1"),
+    ],
+)
+def test_suggest_positive_label_prefers_the_favorable_looking_value(
+    options: tuple[str, ...], expected: str
+) -> None:
+    assert suggest_positive_label(options) == expected

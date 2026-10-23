@@ -158,3 +158,86 @@ def test_config_upload_cap_matches_the_app_and_stays_small() -> None:
     assert match is not None
     assert config["server"]["maxUploadSize"] == int(match.group(1))
     assert int(match.group(1)) <= 25
+
+
+def _hand_case_csv() -> bytes:
+    """The reference case in the README's documented column names."""
+    rows = ["y_true,y_pred,group"]
+    for group, (tp, fp, fn, tn) in {"A": (40, 10, 10, 40), "B": (12, 8, 8, 72)}.items():
+        rows += [f"1,1,{group}"] * tp + [f"0,1,{group}"] * fp
+        rows += [f"1,0,{group}"] * fn + [f"0,0,{group}"] * tn
+    return ("\n".join(rows) + "\n").encode()
+
+
+def _run_bundled_app() -> Any:
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_file(str(APP), default_timeout=90)
+    at.run()
+    return at
+
+
+def _upload(content: bytes, name: str = "upload.csv") -> Any:
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_file(str(APP), default_timeout=90)
+    at.run()
+    next(r for r in at.radio if r.label == "Data").set_value("Upload CSV").run()
+    at.file_uploader[0].set_value((name, content, "text/csv")).run()
+    return at
+
+
+def _selected(at: Any, label: str) -> str:
+    widgets = [*at.selectbox, *at.radio]
+    return str(next(w for w in widgets if w.label == label).value)
+
+
+@pytest.mark.filterwarnings(_APPTEST_WARNINGS[0])
+@pytest.mark.filterwarnings(_APPTEST_WARNINGS[1])
+def test_an_empty_upload_gets_the_clear_message_not_a_traceback() -> None:
+    at = _upload(b"", "empty.csv")
+    assert len(at.exception) == 0
+    assert any("That file is empty" in str(e.value) for e in at.error)
+
+
+@pytest.mark.filterwarnings(_APPTEST_WARNINGS[0])
+@pytest.mark.filterwarnings(_APPTEST_WARNINGS[1])
+def test_a_header_only_upload_gets_the_clear_message() -> None:
+    at = _upload(b"y_true,y_pred,group\n", "header_only.csv")
+    assert len(at.exception) == 0
+    assert any("no data rows" in str(e.value) for e in at.error)
+
+
+@pytest.mark.filterwarnings(_APPTEST_WARNINGS[0])
+@pytest.mark.filterwarnings(_APPTEST_WARNINGS[1])
+def test_an_upload_in_the_documented_format_arrives_correctly_mapped() -> None:
+    at = _upload(_hand_case_csv())
+    assert len(at.exception) == 0
+    assert _selected(at, "True label") == "y_true"
+    assert _selected(at, "Predicted label") == "y_pred"
+    assert _selected(at, "Sensitive attribute") == "group"
+    assert _selected(at, "Positive (favorable) outcome") == "1"
+    warnings = " ".join(str(w.value) for w in at.warning)
+    assert "both mapped" not in warnings
+    assert "positive outcome = `1`" in _markdown_text(at)
+
+
+@pytest.mark.filterwarnings(_APPTEST_WARNINGS[0])
+@pytest.mark.filterwarnings(_APPTEST_WARNINGS[1])
+def test_yes_no_labels_default_to_yes_as_the_positive_outcome() -> None:
+    rows = ["actual,predicted,sex"] + ["yes,yes,F"] * 30 + ["no,yes,F"] * 10
+    rows += ["yes,no,M"] * 20 + ["no,no,M"] * 40
+    at = _upload(("\n".join(rows) + "\n").encode())
+    assert len(at.exception) == 0
+    assert _selected(at, "True label") == "actual"
+    assert _selected(at, "Predicted label") == "predicted"
+    assert _selected(at, "Positive (favorable) outcome") == "yes"
+
+
+@pytest.mark.filterwarnings(_APPTEST_WARNINGS[0])
+@pytest.mark.filterwarnings(_APPTEST_WARNINGS[1])
+def test_the_app_says_the_upload_defaults_are_guesses() -> None:
+    at = _upload(_hand_case_csv())
+    assert any("guessed" in c.value for c in at.sidebar.caption)
+    bundled = _run_bundled_app()
+    assert not any("guessed" in c.value for c in bundled.sidebar.caption)

@@ -7,7 +7,9 @@ raised so the UI can show them alongside a report that is still worth reading.
 
 from __future__ import annotations
 
+import re
 from collections.abc import Sequence
+from dataclasses import dataclass
 from pathlib import Path
 from typing import IO, Any, Final
 
@@ -255,3 +257,96 @@ def _validate_groups(
             "flagged as unstable."
         )
     return tuple(columns)
+
+
+# --------------------------------------------------------------------------------------
+# Guessing a mapping for an uploaded file
+# --------------------------------------------------------------------------------------
+
+_LABEL_NAMES: Final = (
+    "y_true", "label", "labels", "target", "actual", "truth", "ground_truth", "outcome",
+    "class", "y",
+)  # fmt: skip
+_PREDICTION_NAMES: Final = (
+    "y_pred", "prediction", "predictions", "predicted", "pred", "y_hat", "yhat", "decision",
+)  # fmt: skip
+_SCORE_NAMES: Final = (
+    "score", "y_score", "prob", "proba", "probability", "risk_score", "confidence",
+)  # fmt: skip
+_SENSITIVE_NAMES: Final = (
+    "group", "sensitive", "sensitive_attribute", "protected", "sex", "gender", "race",
+    "ethnicity",
+)  # fmt: skip
+_IDENTIFIER_NAMES: Final = ("id", "index", "row", "row_id", "unnamed:_0")
+_POSITIVE_TOKENS: Final = ("1", "true", "yes", "y", "pos", "positive", "t")
+
+
+@dataclass(frozen=True, slots=True)
+class ColumnSuggestion:
+    """A starting point for the column mapping. A guess, to be checked by the user."""
+
+    label: str
+    prediction: str
+    score: str | None
+    sensitive: str
+
+
+def _normalised(name: str) -> str:
+    return re.sub(r"[\s\-]+", "_", name.strip().lower())
+
+
+def suggest_columns(columns: Sequence[str]) -> ColumnSuggestion:
+    """Guess which uploaded column plays which role, from common names.
+
+    Recognised names claim their column first. Any required role still unfilled takes the
+    first unused column in file order, skipping identifier-like names, so two roles never
+    share a column unless the file has too few columns to avoid it. The score is only ever
+    matched by name; guessing a score column from position would be inventing one.
+    """
+    cleaned = {column: _normalised(column) for column in columns}
+    used: set[str] = set()
+
+    def by_name(names: Sequence[str]) -> str | None:
+        for wanted in names:
+            for column in columns:
+                if column not in used and cleaned[column] == wanted:
+                    used.add(column)
+                    return column
+        return None
+
+    label = by_name(_LABEL_NAMES)
+    prediction = by_name(_PREDICTION_NAMES)
+    score = by_name(_SCORE_NAMES)
+    sensitive = by_name(_SENSITIVE_NAMES)
+
+    def next_unused() -> str:
+        for skip_identifiers in (True, False):
+            for column in columns:
+                if column in used:
+                    continue
+                if skip_identifiers and cleaned[column] in _IDENTIFIER_NAMES:
+                    continue
+                used.add(column)
+                return column
+        return columns[0]
+
+    return ColumnSuggestion(
+        label=label or next_unused(),
+        prediction=prediction or next_unused(),
+        score=score,
+        sensitive=sensitive or next_unused(),
+    )
+
+
+def suggest_positive_label(options: Sequence[str]) -> str:
+    """Guess the favorable outcome among a label column's values.
+
+    Prefers a value that reads as "yes" (1, true, yes, pos...). Otherwise the last value in
+    sorted order, which is the favorable one for the usual 0/1, no/yes and <=50K/>50K pairs.
+    It is a guess, and the app says so.
+    """
+    for token in _POSITIVE_TOKENS:
+        for option in options:
+            if option.strip().lower() == token:
+                return option
+    return options[-1] if options else "1"
