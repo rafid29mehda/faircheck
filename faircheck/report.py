@@ -15,12 +15,18 @@ from pathlib import Path
 import pandas as pd
 
 from faircheck.bootstrap import DEFAULT_N_BOOT, BootstrapResult, bootstrap_audit
-from faircheck.calibration import DEFAULT_N_BINS, CalibrationResult, calibrate
+from faircheck.calibration import (
+    DEFAULT_N_BINS,
+    DEFAULT_SCORE_N_BOOT,
+    CalibrationResult,
+    calibrate,
+)
 from faircheck.guidance import (
     GuidanceAnswers,
     Recommendation,
     format_interval,
     format_rate,
+    format_score_estimate,
     recommend,
     summarize,
     verdict_for_gap,
@@ -77,9 +83,15 @@ def run_audit(
     n_boot: int = DEFAULT_N_BOOT,
     seed: int = 0,
     n_bins: int = DEFAULT_N_BINS,
+    score_n_boot: int = DEFAULT_SCORE_N_BOOT,
     answers: GuidanceAnswers | None = None,
 ) -> AuditResult:
-    """Validate, count, bootstrap, and (if scores are present) calibrate."""
+    """Validate, count, bootstrap, and (if scores are present) calibrate.
+
+    ``score_n_boot`` sets the row-level resamples behind the ROC-AUC and ECE intervals
+    (D13); ``0`` turns them off, which matters on very large files because each resample
+    costs O(rows).
+    """
     data = validate(frame, mapping)
     counts = confusion_counts(data.y_true, data.y_pred, data.group_values, mapping.sensitive)
     boot = bootstrap_audit(counts, n_boot=n_boot, seed=seed)
@@ -87,7 +99,13 @@ def run_audit(
     calibration = None
     if data.score is not None:
         calibration = calibrate(
-            data.y_true, data.score, data.group_values, mapping.sensitive, n_bins=n_bins
+            data.y_true,
+            data.score,
+            data.group_values,
+            mapping.sensitive,
+            n_bins=n_bins,
+            n_boot=score_n_boot,
+            seed=seed,
         )
     recommendation = recommend(answers)
     summary = summarize(boot, counts, impossibility)
@@ -349,7 +367,7 @@ sweep are skipped. Re-run with a score in [0, 1] to see calibration by group."""
 
     rows = []
     for group in cal.groups:
-        auc = format_rate(group.roc_auc)
+        auc = format_score_estimate(group.roc_auc, group.roc_auc_ci)
         if group.auc_skip_reason:
             auc = f"n/a ({group.auc_skip_reason})"
         rows.append(
@@ -357,8 +375,17 @@ sweep are skipped. Re-run with a score in [0, 1] to see calibration by group."""
                 "Group": group.label,
                 "n": str(group.n),
                 "ROC-AUC": auc,
-                f"ECE ({cal.n_bins} bins)": format_rate(group.ece),
+                f"ECE ({cal.n_bins} bins)": format_score_estimate(group.ece, group.ece_ci),
             }
+        )
+    interval_note = ""
+    if cal.n_boot > 0:
+        interval_note = (
+            f"\n\nIntervals are 95% percentiles of a row-level bootstrap ({cal.n_boot} "
+            f"resamples within each group, seed {cal.seed}). Resamples that lose a class are "
+            "skipped for ROC-AUC. ECE is biased upward when bins are sparse, so its interval "
+            "describes the sampling variability of the estimate and need not contain the "
+            "point estimate."
         )
     table = _markdown_table(
         ["Group", "n", "ROC-AUC", f"ECE ({cal.n_bins} bins)"],
@@ -376,7 +403,7 @@ sweep are skipped. Re-run with a score in [0, 1] to see calibration by group."""
 
 ECE here is the **positive-class** expected calibration error (mean score vs. observed
 positive rate in equal-width bins on [0, 1]), not Guo et al.'s top-label ECE. Empty bins
-contribute 0. The bin count is part of the number; treat ECE as descriptive.
+contribute 0. The bin count is part of the number; treat ECE as descriptive.{interval_note}
 
 {table}
 

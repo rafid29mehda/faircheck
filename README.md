@@ -128,13 +128,17 @@ Plain-language summary (verbatim):
 
 | group | n | Base rate | Selection rate | TPR | FPR | ECE (10 bins) | ROC-AUC |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| A | 4000 | 0.280 [0.267, 0.294] | 0.108 [0.099, 0.118] | 0.211 [0.186, 0.233] | 0.068 [0.060, 0.077] | 0.015 | 0.701 |
-| B | 4000 | 0.719 [0.705, 0.733] | 0.896 [0.886, 0.906] | 0.937 [0.928, 0.946] | 0.790 [0.767, 0.814] | 0.017 | 0.707 |
+| A | 4000 | 0.280 [0.267, 0.294] | 0.108 [0.099, 0.118] | 0.211 [0.186, 0.233] | 0.068 [0.060, 0.077] | 0.015 [0.011, 0.030] | 0.701 [0.683, 0.720] |
+| B | 4000 | 0.719 [0.705, 0.733] | 0.896 [0.886, 0.906] | 0.937 [0.928, 0.946] | 0.790 [0.767, 0.814] | 0.017 [0.012, 0.032] | 0.707 [0.690, 0.721] |
 
 Disparate impact ratio **0.121 [0.111, 0.132]**. The four-fifths screen is raised
 as a heuristic, not a finding. ECE is the **positive-class** expected calibration
 error (mean score vs observed positive rate, 10 equal-width bins), not Guo et al.'s
-top-label ECE.
+top-label ECE. ROC-AUC and ECE intervals are 95% percentiles of a
+row-level bootstrap (200 resamples within each group; `--score-n-boot 0` turns them off).
+ECE is biased upward when bins are sparse, so its interval describes the sampling
+variability of the estimate and can sit above the point estimate (it does for one group of
+the near-fair example).
 
 Equalising B's PPV to A's is **impossible** without also moving error rates: the
 Chouldechova identity would require an FPR outside [0, 1].
@@ -161,7 +165,9 @@ Provenance and regeneration: [`examples/README.md`](examples/README.md).
 - Percentile bootstrap **under-covers** very small or zero-count cells. Groups with
   n < 30 are flagged; do not over-read a quiet cell.
 - Score metrics (ROC-AUC, ECE) use row-level resampling, not the multinomial
-  fast path. A group with only one class has ROC-AUC `n/a`, not 0.5.
+  fast path (D13), so they cost O(rows) per resample and default to 200 resamples. A group
+  with only one class has ROC-AUC `n/a`, not 0.5. The ECE interval is not a calibrated
+  interval for population ECE (plug-in ECE is biased in sparse bins).
 - Intersectional cells are small by construction.
 - No mitigation, no causal claims, no hosted demo yet.
 

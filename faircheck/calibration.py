@@ -28,6 +28,13 @@ from faircheck.types import BoolArray, FloatArray, IntArray
 DEFAULT_N_BINS: Final = 10
 DEFAULT_N_THRESHOLDS: Final = 101
 
+#: Row-level resamples for the score-metric intervals. Lower than the confusion-cell
+#: default (1000) because each resample costs O(rows), unlike the multinomial fast path.
+DEFAULT_SCORE_N_BOOT: Final = 200
+SCORE_QUANTILES: Final = (0.025, 0.975)
+
+_NAN_PAIR: Final = (float("nan"), float("nan"))
+
 NO_POSITIVES: Final = "this group has no positive labels, so ROC-AUC is not defined"
 NO_NEGATIVES: Final = "this group has no negative labels, so ROC-AUC is not defined"
 
@@ -168,6 +175,12 @@ class GroupCalibration:
     ece: float
     n_bins: int
     bins: tuple[ReliabilityBin, ...]
+    #: 95% percentile row-level bootstrap intervals (D13). ``NaN`` pairs when intervals
+    #: are switched off (``n_boot=0``) or the metric is undefined in every resample.
+    roc_auc_ci: tuple[float, float] = _NAN_PAIR
+    ece_ci: tuple[float, float] = _NAN_PAIR
+    #: Share of resamples in which a class went missing, so ROC-AUC did not exist.
+    auc_undefined_fraction: float = float("nan")
 
 
 @dataclass(frozen=True, slots=True)
@@ -175,6 +188,8 @@ class CalibrationResult:
     n_bins: int
     groups: tuple[GroupCalibration, ...]
     overall: GroupCalibration
+    n_boot: int = 0
+    seed: int = 0
 
     def by_label(self, label: str) -> GroupCalibration:
         for group in self.groups:
@@ -183,8 +198,81 @@ class CalibrationResult:
         raise KeyError(label)
 
 
-def _one_group(label: str, y: BoolArray, score: FloatArray, n_bins: int) -> GroupCalibration:
+def _percentile_pair(values: FloatArray) -> tuple[float, float]:
+    """95% percentile interval of the finite values, or NaN if none are finite.
+
+    Guarded explicitly because ``nanquantile`` on an all-NaN slice warns, and
+    ``filterwarnings = ["error"]`` is part of this project's contract.
+    """
+    finite = values[np.isfinite(values)]
+    if finite.size == 0:
+        return _NAN_PAIR
+    low, high = np.quantile(finite, SCORE_QUANTILES)
+    return float(low), float(high)
+
+
+def _score_bootstrap(
+    y: BoolArray,
+    score: FloatArray,
+    *,
+    n_bins: int,
+    n_boot: int,
+    seed: Sequence[int],
+) -> tuple[tuple[float, float], tuple[float, float], float]:
+    """Row-level bootstrap of ROC-AUC and ECE for one group (D13).
+
+    Each resample draws ``n`` rows with replacement. Only the per-row multiplicity matters,
+    so scores are sorted and binned once and every resample is a weighted count:
+
+    * AUC: pooled positive/negative weights per distinct score, then
+      ``sum(pos_w * (neg_below + 0.5 * neg_tied)) / (W_pos * W_neg)`` -- the same
+      Mann-Whitney statistic as :func:`roc_auc`, including ties at 0.5.
+    * ECE: ``|B_m| * |positive rate - mean score|`` equals ``|sum(y) - sum(s)|`` in a bin,
+      so ECE is ``sum_m |sum(y) - sum(s)| / n`` with weighted sums.
+
+    Resamples that lose a class are skipped for AUC and counted, as the confusion-cell
+    bootstrap does. ECE is biased upward in sparse bins, so its interval describes the
+    sampling variability of the estimate and need not contain the point estimate.
+    """
+    n = int(y.size)
+    if n_boot == 0 or n == 0:
+        return _NAN_PAIR, _NAN_PAIR, float("nan")
+
+    rng = np.random.default_rng(list(seed))
+    distinct, inverse = np.unique(score, return_inverse=True)
+    bins = _bin_index(score, n_bins)
+    positive = y.astype(np.float64)
+    negative = 1.0 - positive
+
+    aucs = np.full(n_boot, np.nan)
+    eces = np.empty(n_boot)
+    for b in range(n_boot):
+        weight = np.bincount(rng.integers(0, n, size=n), minlength=n).astype(np.float64)
+        pos_w = np.bincount(inverse, weights=weight * positive, minlength=distinct.size)
+        neg_w = np.bincount(inverse, weights=weight * negative, minlength=distinct.size)
+        total_pos, total_neg = float(pos_w.sum()), float(neg_w.sum())
+        if total_pos > 0.0 and total_neg > 0.0:
+            below = np.cumsum(neg_w) - neg_w
+            aucs[b] = float((pos_w * (below + 0.5 * neg_w)).sum() / (total_pos * total_neg))
+        score_sum = np.bincount(bins, weights=weight * score, minlength=n_bins)
+        pos_sum = np.bincount(bins, weights=weight * positive, minlength=n_bins)
+        eces[b] = float(np.abs(pos_sum - score_sum).sum() / n)
+
+    undefined = float(1.0 - np.isfinite(aucs).mean())
+    return _percentile_pair(aucs), _percentile_pair(eces), undefined
+
+
+def _one_group(
+    label: str,
+    y: BoolArray,
+    score: FloatArray,
+    n_bins: int,
+    *,
+    n_boot: int = 0,
+    seed: Sequence[int] = (0,),
+) -> GroupCalibration:
     n_positive = int(y.sum())
+    auc_ci, ece_ci, undefined = _score_bootstrap(y, score, n_bins=n_bins, n_boot=n_boot, seed=seed)
     return GroupCalibration(
         label=label,
         n=int(y.size),
@@ -195,6 +283,9 @@ def _one_group(label: str, y: BoolArray, score: FloatArray, n_bins: int) -> Grou
         ece=expected_calibration_error(y, score, n_bins=n_bins),
         n_bins=n_bins,
         bins=reliability_bins(y, score, n_bins=n_bins),
+        roc_auc_ci=auc_ci,
+        ece_ci=ece_ci,
+        auc_undefined_fraction=undefined,
     )
 
 
@@ -205,8 +296,15 @@ def calibrate(
     group_names: Sequence[str],
     *,
     n_bins: int = DEFAULT_N_BINS,
+    n_boot: int = DEFAULT_SCORE_N_BOOT,
+    seed: int = 0,
 ) -> CalibrationResult:
-    """Per-group and overall ROC-AUC, reliability bins and ECE."""
+    """Per-group and overall ROC-AUC, reliability bins and ECE, each with a bootstrap interval.
+
+    ``n_boot=0`` skips the intervals and leaves them ``NaN``.
+    """
+    if n_boot < 0:
+        raise ValueError(f"n_boot must be at least 0, got {n_boot}")
     y = _as_bool(y_true)
     s = _as_score(score)
     if y.size != s.size:
@@ -215,14 +313,20 @@ def calibrate(
         raise ValueError("At least one sensitive column name is required.")
     codes, keys = _group_codes(group_values)
     labels = tuple(" × ".join(key) for key in keys)
+    # One independent stream per group (and one for the overall row), all fixed by ``seed``.
     groups = tuple(
-        _one_group(labels[i], y[codes == i], s[codes == i], n_bins) for i in range(len(keys))
+        _one_group(labels[i], y[codes == i], s[codes == i], n_bins, n_boot=n_boot, seed=(seed, i))
+        for i in range(len(keys))
     )
     overall_names = " × ".join(group_names)
     return CalibrationResult(
         n_bins=n_bins,
         groups=groups,
-        overall=_one_group(f"overall ({overall_names})", y, s, n_bins),
+        overall=_one_group(
+            f"overall ({overall_names})", y, s, n_bins, n_boot=n_boot, seed=(seed, len(keys))
+        ),
+        n_boot=n_boot,
+        seed=seed,
     )
 
 

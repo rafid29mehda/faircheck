@@ -247,3 +247,15 @@ def format_rate(value: float) -> str:
 
 def format_interval(low: float, point: float, high: float) -> str:
     return f"{_fmt_rate(point)} [{_fmt_rate(low)}, {_fmt_rate(high)}]"
+
+
+def format_score_estimate(point: float, interval: tuple[float, float]) -> str:
+    """A score metric with its interval, or the bare value when no interval was computed.
+
+    Shared by the report and the app so neither prints ``[n/a, n/a]`` for intervals that
+    were switched off or undefined.
+    """
+    low, high = interval
+    if not (np.isfinite(low) and np.isfinite(high)):
+        return _fmt_rate(point)
+    return format_interval(low, point, high)

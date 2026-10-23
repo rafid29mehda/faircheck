@@ -5,6 +5,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -121,6 +122,59 @@ def test_scores_section_reports_ece_when_a_score_is_mapped(
     assert "ECE" in markdown
     for group in audit.calibration.groups:
         assert format_rate(group.ece) in markdown
+
+
+def _scored_frame(hand_computed_frame: pd.DataFrame) -> pd.DataFrame:
+    """Scores that actually rank positives higher, so ROC-AUC and ECE are non-trivial."""
+    rng = np.random.default_rng(0)
+    frame = hand_computed_frame.copy()
+    noise = rng.normal(0.0, 0.2, len(frame))
+    frame["score"] = np.clip(0.3 + 0.4 * frame["y_true"].to_numpy() + noise, 0.0, 1.0)
+    return frame
+
+
+def test_scores_table_shows_an_interval_next_to_auc_and_ece(
+    hand_computed_frame: pd.DataFrame,
+) -> None:
+    audit = run_audit(_scored_frame(hand_computed_frame), _mapping(score="score"), n_boot=50)
+    assert audit.calibration is not None
+    markdown = render_markdown(audit)
+    for group in audit.calibration.groups:
+        low, high = group.roc_auc_ci
+        assert format_interval(low, group.roc_auc, high) in markdown
+        low, high = group.ece_ci
+        assert format_interval(low, group.ece, high) in markdown
+    assert "row-level bootstrap" in markdown
+    assert "need not contain the point estimate" in markdown
+
+
+def test_score_intervals_can_be_switched_off_and_the_report_says_nothing_it_did_not_compute(
+    hand_computed_frame: pd.DataFrame,
+) -> None:
+    audit = run_audit(
+        _scored_frame(hand_computed_frame), _mapping(score="score"), n_boot=50, score_n_boot=0
+    )
+    assert audit.calibration is not None
+    markdown = render_markdown(audit)
+    scores_section = markdown.split("## Scores")[1].split("## Why not all at once")[0]
+    for group in audit.calibration.groups:
+        assert format_rate(group.roc_auc) in scores_section
+    assert "row-level bootstrap" not in markdown
+    table_rows = [line for line in scores_section.splitlines() if line.startswith("|")]
+    assert table_rows
+    assert not any("[" in line for line in table_rows)
+
+
+def test_the_score_bootstrap_follows_the_audit_seed(hand_computed_frame: pd.DataFrame) -> None:
+    frame = _scored_frame(hand_computed_frame)
+
+    def intervals(seed: int) -> list[tuple[float, float]]:
+        audit = run_audit(frame, _mapping(score="score"), n_boot=50, seed=seed)
+        assert audit.calibration is not None
+        return [group.roc_auc_ci for group in audit.calibration.groups]
+
+    assert intervals(3) == intervals(3)
+    assert intervals(3) != intervals(4)
 
 
 def test_write_markdown_round_trips(hand_computed_frame: pd.DataFrame, tmp_path: Path) -> None:

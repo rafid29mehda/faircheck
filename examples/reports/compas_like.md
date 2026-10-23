@@ -64,10 +64,12 @@ ECE here is the **positive-class** expected calibration error (mean score vs. ob
 positive rate in equal-width bins on [0, 1]), not Guo et al.'s top-label ECE. Empty bins
 contribute 0. The bin count is part of the number; treat ECE as descriptive.
 
+Intervals are 95% percentiles of a row-level bootstrap (200 resamples within each group, seed 0). Resamples that lose a class are skipped for ROC-AUC. ECE is biased upward when bins are sparse, so its interval describes the sampling variability of the estimate and need not contain the point estimate.
+
 | Group | n | ROC-AUC | ECE (10 bins) |
 | --- | --- | --- | --- |
-| A | 4000 | 0.701 | 0.015 |
-| B | 4000 | 0.707 | 0.017 |
+| A | 4000 | 0.701 [0.683, 0.720] | 0.015 [0.011, 0.030] |
+| B | 4000 | 0.707 [0.690, 0.721] | 0.017 [0.012, 0.032] |
 
 Moving the decision threshold trades TPR against FPR and cannot equalise both when base
 rates differ. Use the CLI/UI slider for the sweep; the export records ECE and AUC only.

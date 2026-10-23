@@ -6,6 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import numpy as np
 import pytest
 
 from faircheck.__main__ import main
@@ -196,3 +197,32 @@ def test_cli_missing_file_returns_2(tmp_path: Path) -> None:
         ]
     )
     assert result == 2
+
+
+def test_score_n_boot_flag_controls_the_score_intervals(tmp_path: Path) -> None:
+    rng = np.random.default_rng(0)
+    frame = cells_to_frame({"A": (40, 10, 10, 40), "B": (12, 8, 8, 72)})
+    noise = rng.normal(0.0, 0.2, len(frame))
+    frame["score"] = np.clip(0.3 + 0.4 * frame["y_true"].to_numpy() + noise, 0.0, 1.0)
+    csv_path = tmp_path / "scored.csv"
+    frame.to_csv(csv_path, index=False)
+    base = [
+        "report",
+        str(csv_path),
+        "--label",
+        "y_true",
+        "--pred",
+        "y_pred",
+        "--group",
+        "group",
+        "--positive",
+        "1",
+        "--score",
+        "score",
+        "--n-boot",
+        "50",
+    ]
+    for flag, expect_intervals in (("0", False), ("40", True)):
+        out = tmp_path / f"report_{flag}.md"
+        assert main([*base, "--score-n-boot", flag, "--out", str(out)]) == 0
+        assert ("row-level bootstrap" in out.read_text(encoding="utf-8")) is expect_intervals

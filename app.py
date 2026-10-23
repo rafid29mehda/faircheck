@@ -22,6 +22,7 @@ from faircheck.guidance import (
     ScoreReading,
     format_interval,
     format_rate,
+    format_score_estimate,
     recommend,
     verdict_for_gap,
 )
@@ -454,7 +455,7 @@ def _tab_scores(audit: AuditResult) -> None:
     )
     rows = []
     for group in cal.groups:
-        auc = format_rate(group.roc_auc)
+        auc = format_score_estimate(group.roc_auc, group.roc_auc_ci)
         if group.auc_skip_reason:
             auc = f"n/a ({group.auc_skip_reason})"
         rows.append(
@@ -462,10 +463,16 @@ def _tab_scores(audit: AuditResult) -> None:
                 "Group": group.label,
                 "n": group.n,
                 "ROC-AUC": auc,
-                f"ECE ({cal.n_bins} bins)": format_rate(group.ece),
+                f"ECE ({cal.n_bins} bins)": format_score_estimate(group.ece, group.ece_ci),
             }
         )
     st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+    if cal.n_boot > 0:
+        st.caption(
+            f"Intervals: 95% row-level bootstrap, {cal.n_boot} resamples within each group, "
+            f"seed {cal.seed}. ECE is biased upward when bins are sparse, so its interval "
+            "need not contain the point estimate."
+        )
     chart = _reliability_chart(audit)
     if chart is not None:
         st.altair_chart(chart, width="stretch")

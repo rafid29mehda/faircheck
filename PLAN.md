@@ -393,6 +393,8 @@ caller of a library that runs anywhere.
 - [x] **M6 - Streamlit app.** All six tabs, Okabe-Ito palette with non-colour encoding, privacy notice, Markdown + PDF download, caching, row caps. *Delivered 2026-09-21: 243 tests passing (1 skip), 98% coverage. `app.py` is a thin caller of `run_audit`. Local run on COMPAS-like (n=8000) shows ECE 0.015/0.017, clear TPR/FPR contrasts, four-fifths screen raised with the EEOC heuristic wording, and Markdown+PDF download. ACS Income with sex×race opens the Intersectional tab (16 groups, 4 with n<30 faded). Screenshots in `scratch/m6/`.*
 - [x] **M7 - README + citation.** README written from real runs with real numbers and a real screenshot; `CITATION.cff`; final read-through for over-claiming. Deployment is deferred (§8), so this milestone ships the repo, not a URL. *Delivered 2026-09-21: 247 tests passing (1 skip). README quotes the seeded CLI report on COMPAS-like (`examples/reports/compas_like.md`); tests fail if those numbers drift. Screenshot from a local Streamlit run. No live-demo URL. ORCID omitted until confirmed.*
 
+- [x] **M8 - Score-metric intervals (D13).** Row-level bootstrap intervals for per-group ROC-AUC and ECE, surfaced in the report, CLI (`--score-n-boot`) and app. Closes a gap found on 2026-10-23: M2 and the README promised these intervals but the code printed bare numbers. *Delivered 2026-10-23 (see CHANGELOG for test counts).*
+
 Each milestone ends with: run the tests, show you real output, tick the box here, **stop for your go-ahead.**
 
 ---

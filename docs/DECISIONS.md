@@ -68,7 +68,8 @@ row-resampling bootstrap instead of merely asserted.
 
 Default scheme is stratified (observed group sizes held fixed), which is the right
 conditioning for per-group rate intervals. Score-based metrics (ROC-AUC, ECE) are *not*
-functions of four counts, so they use genuine row-level resampling with a lower `B`.
+functions of four counts, so they use genuine row-level resampling with a lower `B`
+(*specified here in M2; not actually built until M8 - see D13*).
 
 *Requires:* metrics stay shape-generic - see `AGENTS.md` invariant 4.
 
@@ -207,3 +208,41 @@ out of scope until they ask. D1 still records the hosting research for that day.
 
 *Earlier (same date):* the user asked not to think about hosting or a GitHub repo
 yet. That part of D10 no longer holds.
+
+## D13 - Score-metric intervals: row-level bootstrap via per-row multiplicities
+**2026-10-23 · accepted (implemented in M8)**
+
+*What was wrong.* D4, PLAN and the README all said ROC-AUC and ECE get row-level bootstrap
+intervals. `calibration.py` never resampled anything, and the report printed both as bare
+numbers - the one place the tool broke its own "no number without an interval" rule. Found
+while auditing the project against current practice, not by a test.
+
+*Decision.* Per group (and for the overall row), draw `n` row indices with replacement and
+turn them into per-row multiplicities with one `bincount`. Scores are sorted and binned
+once, so each resample is O(n) weighted counting with no re-sorting:
+
+- **AUC** = `sum(pos_w * (neg_below + 0.5 * neg_tied)) / (W_pos * W_neg)` over distinct
+  scores, the same Mann-Whitney statistic as `roc_auc` (ties count 0.5).
+- **ECE** = `sum_m |sum(y) - sum(s)| / n` over bins, because `|B_m| * |rate - mean score|`
+  collapses to `|sum(y) - sum(s)|` within a bin.
+
+Default 200 resamples (`run_audit(score_n_boot=...)`, CLI `--score-n-boot`; `0` switches
+intervals off and leaves `NaN`). One independent stream per group, seeded `(seed, index)`, so
+the audit seed still fixes every number. Resamples that lose a class are skipped for AUC and
+counted in `auc_undefined_fraction`, matching D4's treatment of undefined metrics.
+
+*Cost (measured 2026-10-23, 200 resamples, two groups plus the overall row):* about 0.06 s
+at 8,000 rows, 0.64 s at 100,000, 7 s at 1,000,000. Unlike the confusion-cell bootstrap
+(D4) this grows with rows, hence the lower default and the off switch.
+
+*Known limitation, stated in the report.* Plug-in ECE is biased upward when bins are sparse,
+so its percentile interval describes the sampling variability of the estimate and can sit
+above the point estimate. On the near-fair example group A reads 0.008 with interval
+[0.009, 0.026]. It is **not** a calibrated interval for population ECE. A debiased or
+binning-free calibration estimator is future work.
+
+*Rejected:* DeLong's analytic AUC variance (covers AUC only; a second machinery for ECE);
+the multinomial fast path (does not apply to score metrics).
+*Guards:* `tests/test_score_intervals.py` - agreement with naive row resampling for AUC, ECE
+and heavily tied scores (the tied-score test was added after a deliberate mutation of the
+tie term went undetected), reproducibility, narrowing with n, undefined-resample handling.

@@ -9,6 +9,7 @@ import argparse
 import sys
 from collections.abc import Sequence
 
+from faircheck.calibration import DEFAULT_SCORE_N_BOOT
 from faircheck.guidance import DecisionKind, GuidanceAnswers, LabelTrust, ScoreReading
 from faircheck.report import render_markdown, run_audit, write_markdown, write_pdf
 from faircheck.types import ColumnMapping
@@ -49,6 +50,16 @@ def _build_parser() -> argparse.ArgumentParser:
         default=1000,
         dest="n_boot",
         help="Number of stratified bootstrap resamples (default 1000).",
+    )
+    report.add_argument(
+        "--score-n-boot",
+        type=int,
+        default=DEFAULT_SCORE_N_BOOT,
+        dest="score_n_boot",
+        help=(
+            "Row-level resamples for the ROC-AUC and ECE intervals "
+            f"(default {DEFAULT_SCORE_N_BOOT}; 0 turns them off, useful on very large files)."
+        ),
     )
     report.add_argument(
         "--out",
@@ -99,6 +110,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             frame,
             mapping,
             n_boot=args.n_boot,
+            score_n_boot=args.score_n_boot,
             seed=args.seed,
             answers=_answers(args),
         )

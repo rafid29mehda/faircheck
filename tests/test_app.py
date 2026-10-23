@@ -35,6 +35,7 @@ def test_app_delegates_metrics_to_the_library() -> None:
     assert "recommend" in source
     assert "threshold_sweep" in source
     assert "fails_four_fifths" in source
+    assert "format_score_estimate" in source
     # Formulas live in the RATES/GAPS registries, not restated in the UI.
     assert "TP / (TP + FN)" not in source
     assert "max_a SR_a" not in source
@@ -85,3 +86,17 @@ def test_app_grows_an_intersectional_tab_when_two_attributes_are_mapped() -> Non
     warnings = " ".join(str(w.value) for w in at.warning)
     assert "Intersectional cells are small by construction" in warnings
     assert "n < 30" in warnings
+
+
+@pytest.mark.filterwarnings(_APPTEST_WARNINGS[0])
+@pytest.mark.filterwarnings(_APPTEST_WARNINGS[1])
+def test_app_scores_tab_shows_intervals_for_auc_and_ece() -> None:
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_file(str(APP), default_timeout=90)
+    at.run()
+    assert len(at.exception) == 0
+    scores = next(d.value for d in at.dataframe if "ROC-AUC" in d.value.columns)
+    ece_column = next(c for c in scores.columns if str(c).startswith("ECE"))
+    assert scores["ROC-AUC"].str.contains(r"\[", regex=True).all()
+    assert scores[ece_column].str.contains(r"\[", regex=True).all()

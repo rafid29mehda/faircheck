@@ -5,6 +5,30 @@ Milestones are defined in `PLAN.md`; the reasoning behind design choices is in `
 
 ## [Unreleased]
 
+### M8 - score-metric intervals - 2026-10-23
+
+Fixed
+- ROC-AUC and ECE were printed as bare numbers although D4, PLAN and the README said they
+  carried row-level bootstrap intervals. `calibrate()` now returns 95% percentile intervals
+  for both (D13), per group and overall.
+
+Added
+- `calibrate(..., n_boot=200, seed=0)`; `GroupCalibration.roc_auc_ci`, `.ece_ci`,
+  `.auc_undefined_fraction`; `CalibrationResult.n_boot` / `.seed`.
+- `run_audit(score_n_boot=...)` and CLI `--score-n-boot` (0 turns the intervals off).
+- `guidance.format_score_estimate`, used by both the report and the app.
+- Report and app Scores tables show `value [low, high]` plus a caveat that ECE is biased
+  upward in sparse bins and its interval need not contain the point estimate.
+- `tests/test_score_intervals.py` (12 tests): equivalence to naive row resampling for AUC,
+  ECE and tied scores, reproducibility, narrowing with n, undefined resamples.
+
+Notes
+- Cost grows with rows, unlike D4: about 0.06 s at 8,000 rows, 0.64 s at 100,000, 7 s at
+  1,000,000 (200 resamples, measured).
+- `examples/reports/compas_like.md` and the README table regenerated from the CLI.
+- Test count 247 -> 264 passed (1 skip): 12 new interval tests, 3 report, 1 CLI, 1 app.
+- Nothing else changed in the metric or verdict logic.
+
 ### GitHub remote - 2026-09-21
 
 - Public repo: `https://github.com/rafid29mehda/faircheck`. A hosted demo is still deferred.
