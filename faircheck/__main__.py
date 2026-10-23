@@ -9,6 +9,7 @@ import argparse
 import sys
 from collections.abc import Sequence
 
+from faircheck.bootstrap import ADJUSTMENTS, MAX_T
 from faircheck.calibration import DEFAULT_SCORE_N_BOOT
 from faircheck.guidance import DecisionKind, GuidanceAnswers, LabelTrust, ScoreReading
 from faircheck.report import render_markdown, run_audit, write_markdown, write_pdf
@@ -62,6 +63,15 @@ def _build_parser() -> argparse.ArgumentParser:
         ),
     )
     report.add_argument(
+        "--adjust",
+        choices=ADJUSTMENTS,
+        default=MAX_T,
+        help=(
+            "How verdicts treat many comparisons: max_t (default) judges all headline "
+            "contrasts against one simultaneous band; none judges each on its own."
+        ),
+    )
+    report.add_argument(
         "--out",
         default=None,
         help="Markdown destination. Default: stdout.",
@@ -111,6 +121,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             mapping,
             n_boot=args.n_boot,
             score_n_boot=args.score_n_boot,
+            adjust=args.adjust,
             seed=args.seed,
             answers=_answers(args),
         )

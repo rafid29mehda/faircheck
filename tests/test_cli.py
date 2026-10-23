@@ -226,3 +226,25 @@ def test_score_n_boot_flag_controls_the_score_intervals(tmp_path: Path) -> None:
         out = tmp_path / f"report_{flag}.md"
         assert main([*base, "--score-n-boot", flag, "--out", str(out)]) == 0
         assert ("row-level bootstrap" in out.read_text(encoding="utf-8")) is expect_intervals
+
+
+def test_adjust_flag_switches_the_verdict_adjustment_off(tmp_path: Path) -> None:
+    csv_path = _write_csv(tmp_path / "preds.csv")
+    base = [
+        "report",
+        str(csv_path),
+        "--label",
+        "y_true",
+        "--pred",
+        "y_pred",
+        "--group",
+        "group",
+        "--positive",
+        "1",
+        "--n-boot",
+        "50",
+    ]
+    for flag, expect_max_t in (("max_t", True), ("none", False)):
+        out = tmp_path / f"report_{flag}.md"
+        assert main([*base, "--adjust", flag, "--out", str(out)]) == 0
+        assert ("max-t" in out.read_text(encoding="utf-8")) is expect_max_t

@@ -5,6 +5,30 @@ Milestones are defined in `PLAN.md`; the reasoning behind design choices is in `
 
 ## [Unreleased]
 
+### M9 - simultaneous verdicts - 2026-10-23
+
+Changed
+- Verdicts (`has_clear_contrast`, the summary sentences, the gap chips) now use simultaneous
+  max-t bands over the verdict contrasts (selection rate, TPR, FPR, precision, each against
+  the reference group), so many comparisons no longer produce chance findings (D14).
+  The marginal rule is still available as `adjust="none"` / `--adjust none`.
+- Summary wording: "still clear after adjusting for N comparisons", plus a sentence for a
+  contrast that is clear on its own but not after adjustment.
+
+Added
+- `bootstrap_audit(adjust=...)`; `BootstrapResult.adjustment`, `.adjusted_contrast_ci`,
+  `.family_size`, `.critical_value`, `.has_clear_unadjusted_contrast()`;
+  `bootstrap.VERDICT_RATE_KEYS`.
+- `run_audit(adjust=...)`, CLI `--adjust {max_t,none}`; report and Gaps tab say how
+  verdicts are judged.
+- `tests/test_multiplicity.py` (16 tests).
+
+Notes
+- Null case (three identical groups of 200, 300 trials, 8 contrasts): at least one false
+  "clear" contrast in 31.7% of trials without adjustment, 6.3% with it.
+- Test count 264 -> 286 passed (1 skip); coverage of `faircheck/` stays 98%.
+- `examples/reports/compas_like.md` and the README summary regenerated.
+
 ### M8 - score-metric intervals - 2026-10-23
 
 Fixed

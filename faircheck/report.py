@@ -14,7 +14,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from faircheck.bootstrap import DEFAULT_N_BOOT, BootstrapResult, bootstrap_audit
+from faircheck.bootstrap import DEFAULT_N_BOOT, MAX_T, BootstrapResult, bootstrap_audit
 from faircheck.calibration import (
     DEFAULT_N_BINS,
     DEFAULT_SCORE_N_BOOT,
@@ -84,17 +84,19 @@ def run_audit(
     seed: int = 0,
     n_bins: int = DEFAULT_N_BINS,
     score_n_boot: int = DEFAULT_SCORE_N_BOOT,
+    adjust: str = MAX_T,
     answers: GuidanceAnswers | None = None,
 ) -> AuditResult:
     """Validate, count, bootstrap, and (if scores are present) calibrate.
 
     ``score_n_boot`` sets the row-level resamples behind the ROC-AUC and ECE intervals
     (D13); ``0`` turns them off, which matters on very large files because each resample
-    costs O(rows).
+    costs O(rows). ``adjust`` picks how verdicts handle many comparisons: ``"max_t"``
+    (default, simultaneous bands, D14) or ``"none"`` (each contrast on its own).
     """
     data = validate(frame, mapping)
     counts = confusion_counts(data.y_true, data.y_pred, data.group_values, mapping.sensitive)
-    boot = bootstrap_audit(counts, n_boot=n_boot, seed=seed)
+    boot = bootstrap_audit(counts, n_boot=n_boot, seed=seed, adjust=adjust)
     impossibility = explain_impossibility(counts, reference_index=boot.reference_index)
     calibration = None
     if data.score is not None:
@@ -322,13 +324,21 @@ def _gaps(audit: AuditResult) -> str:
             f"{FOUR_FIFTHS_NOTE}"
         )
 
+    adjustment_note = ""
+    if boot.adjustment == MAX_T and boot.family_size > 0:
+        adjustment_note = (
+            f"\n\nVerdicts are judged against simultaneous 95% bands that cover all "
+            f"{boot.family_size} headline contrasts at once (max-t bootstrap, critical value "
+            f"{boot.critical_value:.2f} instead of 1.96), so a few chance differences do not "
+            "show up as findings. See docs/DECISIONS.md D14."
+        )
     return f"""## Summary gaps
 
 Max-min gaps are the literature's headline numbers (and match Fairlearn). They are
 non-negative by construction, so a CI that excludes zero is **not** evidence of a
 disparity -- sampling noise alone pushes the maximum above the minimum. The **Verdict**
 column uses signed contrasts against the reference group ({boot.reference_label}), which
-can contain zero. See docs/DECISIONS.md D11.
+can contain zero. See docs/DECISIONS.md D11.{adjustment_note}
 
 {table}
 
@@ -504,12 +514,18 @@ def _methods(audit: AuditResult) -> str:
         for s in RATES
     )
     gap_lines = "\n".join(f"- {s.label}: `{s.formula}` -- {s.reference}" for s in GAPS)
+    method_note = ""
+    if boot.adjustment == MAX_T and boot.family_size > 0:
+        method_note = (
+            f" The verdict contrasts ({boot.family_size} of them) share one max-t bootstrap "
+            "band (D14)."
+        )
     return f"""## Methods
 
 Stratified percentile bootstrap with {boot.n_boot:,} resamples and seed {boot.seed}.
 Because every confusion-matrix rate is a function of the four cell counts, a within-group
 row resample is a multinomial draw over those cells (D4). Verdicts use signed contrasts
-against {boot.reference_label}, not max-min gap CIs (D11).
+against {boot.reference_label}, not max-min gap CIs (D11).{method_note}
 
 {rate_lines}
 

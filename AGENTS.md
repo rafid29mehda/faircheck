@@ -23,9 +23,9 @@ honest communication rank above visual polish and feature count**. Concretely:
 
 | | |
 |---|---|
-| Phase | 2 (execution). Plan approved 2026-09-21. **M1-M8 complete.** |
-| Milestone | **M8 done** (score-metric intervals, D13). No further planned milestones. |
-| Tests | 264 passing (1 skip), 98% coverage on `faircheck/` |
+| Phase | 2 (execution). Plan approved 2026-09-21. **M1-M9 complete.** |
+| Milestone | **M9 done** (simultaneous verdicts, D14). No further planned milestones. |
+| Tests | 286 passing (1 skip), 98% coverage on `faircheck/` |
 | Quality gate | `ruff check` + `ruff format --check` + `mypy` + `pytest` all green |
 | Not started | Streamlit Community Cloud / hosted demo (ask before doing this) |
 | Deployment | GitHub is public (`rafid29mehda/faircheck`). Do not deploy a hosted demo without being asked. |

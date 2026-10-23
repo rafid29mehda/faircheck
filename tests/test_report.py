@@ -177,6 +177,17 @@ def test_the_score_bootstrap_follows_the_audit_seed(hand_computed_frame: pd.Data
     assert intervals(3) != intervals(4)
 
 
+def test_report_states_how_verdicts_are_adjusted(hand_computed_frame: pd.DataFrame) -> None:
+    adjusted = render_markdown(run_audit(hand_computed_frame, _mapping(), n_boot=200, seed=0))
+    assert "simultaneous" in adjusted
+    assert "max-t" in adjusted
+    plain = render_markdown(
+        run_audit(hand_computed_frame, _mapping(), n_boot=200, seed=0, adjust="none")
+    )
+    assert "max-t" not in plain
+    assert "simultaneous" not in plain
+
+
 def test_write_markdown_round_trips(hand_computed_frame: pd.DataFrame, tmp_path: Path) -> None:
     audit = run_audit(hand_computed_frame, _mapping(), n_boot=50, seed=0)
     dest = tmp_path / "report.md"

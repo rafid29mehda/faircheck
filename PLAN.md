@@ -395,6 +395,8 @@ caller of a library that runs anywhere.
 
 - [x] **M8 - Score-metric intervals (D13).** Row-level bootstrap intervals for per-group ROC-AUC and ECE, surfaced in the report, CLI (`--score-n-boot`) and app. Closes a gap found on 2026-10-23: M2 and the README promised these intervals but the code printed bare numbers. *Delivered 2026-10-23 (see CHANGELOG for test counts).*
 
+- [x] **M9 - Simultaneous verdicts (D14).** Verdicts are judged against max-t bootstrap bands over the four headline contrasts instead of one 95% interval each; `--adjust none` keeps the old rule. *Delivered 2026-10-23: 286 tests passing (1 skip). On a null case the false-finding rate fell from 31.7% to 6.3%.*
+
 Each milestone ends with: run the tests, show you real output, tick the box here, **stop for your go-ahead.**
 
 ---

@@ -13,7 +13,7 @@ from enum import Enum
 
 import numpy as np
 
-from faircheck.bootstrap import BootstrapResult
+from faircheck.bootstrap import MAX_T, VERDICT_RATE_KEYS, BootstrapResult
 from faircheck.impossibility import ImpossibilityResult
 from faircheck.metrics import RATES_BY_KEY, GapSpec
 from faircheck.types import GroupCounts
@@ -166,6 +166,19 @@ def _largest_clear_contrast(
     return best
 
 
+def _removed_by_adjustment(boot: BootstrapResult, rate_key: str) -> int | None:
+    """A group whose marginal contrast excludes zero but whose adjusted verdict does not."""
+    for index in range(len(boot.group_labels)):
+        if index == boot.reference_index:
+            continue
+        if (
+            boot.has_clear_unadjusted_contrast(rate_key, index) is True
+            and boot.has_clear_contrast(rate_key, index) is False
+        ):
+            return index
+    return None
+
+
 def summarize(
     boot: BootstrapResult,
     counts: GroupCounts,
@@ -175,7 +188,10 @@ def summarize(
     sentences: list[str] = []
     ref = boot.reference_label
 
-    for rate_key in ("selection_rate", "tpr", "fpr", "precision"):
+    adjusted = boot.adjustment == MAX_T and boot.family_size > 0
+    family_note = f"after adjusting for {boot.family_size} comparisons" if adjusted else ""
+
+    for rate_key in VERDICT_RATE_KEYS:
         spec = RATES_BY_KEY[rate_key]
         found = _largest_clear_contrast(boot, rate_key)
         if found is None:
@@ -185,7 +201,16 @@ def summarize(
                 for i in range(len(boot.group_labels))
                 if i != boot.reference_index
             )
-            if computable:
+            if not computable:
+                continue
+            removed = _removed_by_adjustment(boot, rate_key) if adjusted else None
+            if removed is not None:
+                sentences.append(
+                    f"The 95% CI for {boot.group_labels[removed]}'s {spec.label} excludes zero "
+                    f"on its own, but there is **no clear evidence of a gap** relative to "
+                    f"{ref} {family_note}."
+                )
+            else:
                 sentences.append(
                     f"There is **no clear evidence of a gap** in {spec.label} relative to "
                     f"{ref} (the 95% CI includes zero)."
@@ -194,9 +219,10 @@ def summarize(
         index, low, point, high = found
         other = boot.group_labels[index]
         direction = "higher" if point > 0 else "lower"
+        survived = f"; still clear {family_note}" if adjusted else ""
         sentences.append(
             f"{other}'s {spec.label} is {_fmt_pp(point)} {direction} than {ref}'s "
-            f"(95% CI {_fmt_ci_pp(low, high)})."
+            f"(95% CI {_fmt_ci_pp(low, high)}{survived})."
         )
 
     small = [

@@ -246,3 +246,52 @@ the multinomial fast path (does not apply to score metrics).
 *Guards:* `tests/test_score_intervals.py` - agreement with naive row resampling for AUC, ECE
 and heavily tied scores (the tied-score test was added after a deliberate mutation of the
 tie term went undetected), reproducibility, narrowing with n, undefined-resample handling.
+
+## D14 - Verdicts use simultaneous (max-t) bands over the headline contrasts
+**2026-10-23 · accepted (implemented in M9)**
+
+*Problem.* Every group-versus-reference contrast was judged on its own 95% interval. With G
+groups there are 4 x (G-1) of them (selection rate, TPR, FPR, precision), so false findings
+add up. Measured on a null case, three identical groups of 200, 300 trials, 8 contrasts per
+audit: at least one false "clear" contrast in 31.7% of trials. (The 12% quoted earlier in
+the guide counted only the two TPR contrasts.)
+
+*Decision.* Standardise each contrast by its bootstrap standard deviation. T* is the 95th
+percentile, over resamples, of the largest standardised deviation from the observed value
+across the whole family. The band for a contrast is `obs +/- T* sd`, and a verdict is
+"clear" only if that band excludes zero. It reuses the D4 resamples, so it costs nothing
+extra. On the same null case the false-finding rate drops to 6.3% (19 of 300; the Monte
+Carlo error on 300 trials is about 1.3 points, so this is consistent with 5%). The mean
+critical value is 2.64 for a family of 8, and 2.37 for the COMPAS-like pair (family of 4).
+
+*Family.* `bootstrap.VERDICT_RATE_KEYS` times the non-reference groups. These four rates
+are the inputs of the five gaps, so they are everything a verdict depends on. Base rate,
+accuracy and FNR (which is 1 - TPR) stay marginal because no verdict uses them.
+
+*Edge cases.* A contrast with no finite resamples is left out of the maximum and has no
+verdict (`None`). A constant contrast (standard deviation 0, for example one group catching
+every positive and the other none) keeps a degenerate band at its observed value. The
+reference group is zero by construction.
+
+*Wording.* A clear result reads "still clear after adjusting for N comparisons". A contrast
+whose own 95% interval excludes zero but whose adjusted band does not gets a sentence saying
+exactly that, so the adjustment is never silent. `adjust="none"` (CLI `--adjust none`) goes
+back to judging each contrast on its own.
+
+*What it does not do.* It covers these four rates against one reference group. It does not
+cover other attributes audited in separate runs or repeated re-runs. It is a bootstrap
+approximation, not an exact guarantee, and small groups make it rougher.
+
+*Related work.* Cherian and Candes (JMLR 2024) treat fairness auditing as multiple testing
+and use the bootstrap for simultaneous bounds over collections of groups. This decision uses
+the standard sup-t bootstrap band, not their procedure, and I have not implemented or
+compared theirs. Ferrara et al. (NeurIPS 2025) address small intersectional groups with
+size-adaptive tests; that is the next item.
+
+*Rejected.* Bonferroni and Holm (ignore that contrasts from the same data are correlated, so
+they over-correct); Benjamini-Hochberg (controls the share of false discoveries instead,
+which suits a later subgroup search better than a fixed family).
+*Guards:* `tests/test_multiplicity.py`: null false-finding rates, band widths, a borderline
+contrast that flips under adjustment, and a deliberate mutation (critical value fixed at
+1.96) that made five tests fail.
+

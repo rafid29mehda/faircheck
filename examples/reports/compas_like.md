@@ -10,10 +10,10 @@ Screening tool. Not a legal or causal conclusion. Uploaded data is processed in 
 
 ## Plain-language summary
 
-- B's Selection rate is 79 percentage points higher than A's (95% CI 77 to 80 pp).
-- B's TPR (recall) is 73 percentage points higher than A's (95% CI 70 to 75 pp).
-- B's FPR is 72 percentage points higher than A's (95% CI 70 to 75 pp).
-- B's Precision (PPV) is 21 percentage points higher than A's (95% CI 16 to 25 pp).
+- B's Selection rate is 79 percentage points higher than A's (95% CI 77 to 80 pp; still clear after adjusting for 4 comparisons).
+- B's TPR (recall) is 73 percentage points higher than A's (95% CI 70 to 75 pp; still clear after adjusting for 4 comparisons).
+- B's FPR is 72 percentage points higher than A's (95% CI 70 to 75 pp; still clear after adjusting for 4 comparisons).
+- B's Precision (PPV) is 21 percentage points higher than A's (95% CI 16 to 25 pp; still clear after adjusting for 4 comparisons).
 - Base rates differ (A 28% vs B 72%), so calibration/predictive parity and equal error rates cannot all hold for an imperfect classifier -- see 'Why not all at once'.
 
 ## Per-group rates
@@ -35,6 +35,8 @@ non-negative by construction, so a CI that excludes zero is **not** evidence of 
 disparity -- sampling noise alone pushes the maximum above the minimum. The **Verdict**
 column uses signed contrasts against the reference group (A), which
 can contain zero. See docs/DECISIONS.md D11.
+
+Verdicts are judged against simultaneous 95% bands that cover all 4 headline contrasts at once (max-t bootstrap, critical value 2.37 instead of 1.96), so a few chance differences do not show up as findings. See docs/DECISIONS.md D14.
 
 | Gap | Value [95% CI] | Per-group | Verdict | Reference |
 | --- | --- | --- | --- | --- |
@@ -99,7 +101,7 @@ Sources: Chouldechova 2017 (arXiv:1610.07524); Kleinberg, Mullainathan and Ragha
 Stratified percentile bootstrap with 1,000 resamples and seed 0.
 Because every confusion-matrix rate is a function of the four cell counts, a within-group
 row resample is a multinomial draw over those cells (D4). Verdicts use signed contrasts
-against A, not max-min gap CIs (D11).
+against A, not max-min gap CIs (D11). The verdict contrasts (4 of them) share one max-t bootstrap band (D14).
 
 - Base rate: `(TP + FN) / n`
 - Selection rate: `(TP + FP) / n`

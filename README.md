@@ -120,10 +120,10 @@ Command (the committed report is the stdout of this, saved to
 
 Plain-language summary (verbatim):
 
-- B's Selection rate is 79 percentage points higher than A's (95% CI 77 to 80 pp).
-- B's TPR (recall) is 73 percentage points higher than A's (95% CI 70 to 75 pp).
-- B's FPR is 72 percentage points higher than A's (95% CI 70 to 75 pp).
-- B's Precision (PPV) is 21 percentage points higher than A's (95% CI 16 to 25 pp).
+- B's Selection rate is 79 percentage points higher than A's (95% CI 77 to 80 pp; still clear after adjusting for 4 comparisons).
+- B's TPR (recall) is 73 percentage points higher than A's (95% CI 70 to 75 pp; still clear after adjusting for 4 comparisons).
+- B's FPR is 72 percentage points higher than A's (95% CI 70 to 75 pp; still clear after adjusting for 4 comparisons).
+- B's Precision (PPV) is 21 percentage points higher than A's (95% CI 16 to 25 pp; still clear after adjusting for 4 comparisons).
 - Base rates differ (A 28% vs B 72%), so calibration/predictive parity and equal error rates cannot all hold for an imperfect classifier -- see 'Why not all at once'.
 
 | group | n | Base rate | Selection rate | TPR | FPR | ECE (10 bins) | ROC-AUC |
@@ -139,6 +139,10 @@ row-level bootstrap (200 resamples within each group; `--score-n-boot 0` turns t
 ECE is biased upward when bins are sparse, so its interval describes the sampling
 variability of the estimate and can sit above the point estimate (it does for one group of
 the near-fair example).
+
+Verdicts are judged against simultaneous 95% bands over the four headline contrasts
+(max-t bootstrap; the critical value is 2.37 here instead of 1.96, and `--adjust none`
+switches it off), so a few chance differences do not show up as findings (D14).
 
 Equalising B's PPV to A's is **impossible** without also moving error rates: the
 Chouldechova identity would require an FPR outside [0, 1].
@@ -169,6 +173,8 @@ Provenance and regeneration: [`examples/README.md`](examples/README.md).
   with only one class has ROC-AUC `n/a`, not 0.5. The ECE interval is not a calibrated
   interval for population ECE (plug-in ECE is biased in sparse bins).
 - Intersectional cells are small by construction.
+- The multiplicity adjustment covers the four headline rates against one reference group
+  (D14). It does not cover other attributes you audit separately or repeated re-runs.
 - No mitigation, no causal claims, no hosted demo yet.
 
 Screening tool. Not a legal or causal conclusion.

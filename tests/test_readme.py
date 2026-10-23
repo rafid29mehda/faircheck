@@ -13,7 +13,8 @@ CITATION = ROOT / "CITATION.cff"
 # Copied from the seeded COMPAS-like CLI run (n_boot=1000, seed 0). If the
 # library's numbers move, the README must move with them.
 _FROM_THE_RUN = (
-    "B's TPR (recall) is 73 percentage points higher than A's (95% CI 70 to 75 pp).",
+    "B's TPR (recall) is 73 percentage points higher than A's (95% CI 70 to 75 pp; still "
+    "clear after adjusting for 4 comparisons).",
     "0.280 [0.267, 0.294]",
     "0.121 [0.111, 0.132]",
     "0.015",

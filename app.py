@@ -399,6 +399,13 @@ def _tab_gaps(audit: AuditResult, highlighted: tuple[str, ...]) -> None:
         "The verdict uses signed contrasts against the reference group "
         f"**{audit.bootstrap.reference_label}** (D11)."
     )
+    if audit.bootstrap.adjustment == "max_t" and audit.bootstrap.family_size > 0:
+        st.markdown(
+            "Verdicts are judged against **simultaneous** 95% bands over all "
+            f"{audit.bootstrap.family_size} headline contrasts (max-t bootstrap, critical "
+            f"value {audit.bootstrap.critical_value:.2f} instead of 1.96), so a few chance "
+            "differences do not show up as findings (D14)."
+        )
     boot = audit.bootstrap
     for spec in GAPS:
         with st.container(border=True):

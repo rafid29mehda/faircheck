@@ -152,3 +152,29 @@ def test_small_n_groups_are_called_unstable() -> None:
     joined = " ".join(summarize(boot, counts, impossibility))
     assert "n = 10" in joined
     assert "unstable" in joined
+
+
+def test_summary_says_when_a_clear_result_survived_the_adjustment() -> None:
+    counts = counts_from([(237, 197, 884, 2682), (2696, 887, 181, 236)])
+    boot = bootstrap_audit(counts, n_boot=500, seed=0)
+    impossibility = explain_impossibility(counts, reference_index=boot.reference_index)
+    joined = " ".join(summarize(boot, counts, impossibility))
+    assert "still clear after adjusting for 4 comparisons" in joined
+
+
+def test_summary_explains_a_contrast_that_only_the_adjustment_removes() -> None:
+    counts = counts_from([(300, 150, 200, 350), (280, 160, 220, 340), (330, 140, 170, 360)])
+    boot = bootstrap_audit(counts, n_boot=2000, seed=0)
+    impossibility = explain_impossibility(counts, reference_index=boot.reference_index)
+    joined = " ".join(summarize(boot, counts, impossibility))
+    assert "excludes zero on its own" in joined
+    assert "after adjusting for 8 comparisons" in joined
+    assert "no clear evidence of a gap" in joined
+
+
+def test_summary_makes_no_adjustment_claim_when_adjustment_is_off() -> None:
+    counts = counts_from([(237, 197, 884, 2682), (2696, 887, 181, 236)])
+    boot = bootstrap_audit(counts, n_boot=500, seed=0, adjust="none")
+    impossibility = explain_impossibility(counts, reference_index=boot.reference_index)
+    joined = " ".join(summarize(boot, counts, impossibility))
+    assert "adjusting" not in joined

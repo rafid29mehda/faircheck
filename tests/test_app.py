@@ -100,3 +100,14 @@ def test_app_scores_tab_shows_intervals_for_auc_and_ece() -> None:
     ece_column = next(c for c in scores.columns if str(c).startswith("ECE"))
     assert scores["ROC-AUC"].str.contains(r"\[", regex=True).all()
     assert scores[ece_column].str.contains(r"\[", regex=True).all()
+
+
+@pytest.mark.filterwarnings(_APPTEST_WARNINGS[0])
+@pytest.mark.filterwarnings(_APPTEST_WARNINGS[1])
+def test_app_gaps_tab_says_verdicts_are_simultaneous() -> None:
+    from streamlit.testing.v1 import AppTest
+
+    at = AppTest.from_file(str(APP), default_timeout=90)
+    at.run()
+    assert len(at.exception) == 0
+    assert "simultaneous" in _markdown_text(at)
